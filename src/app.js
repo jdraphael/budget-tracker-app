@@ -2,6 +2,12 @@
 import { setupTabNavigation, switchTab } from '../components/tabNavigation.js';
 
 // Luxon for date manipulation
+
+// Initialize tab navigation after DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    setupTabNavigation();
+});
+
 const DateTime = luxon.DateTime;
 
 const state = {
