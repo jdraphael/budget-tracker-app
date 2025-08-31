@@ -1,0 +1,36 @@
+id,category,subcategory
+1,Housing,Rent/Mortgage
+2,Housing,HOA
+3,Housing,Repairs
+4,Utilities,Electric
+5,Utilities,Water
+6,Utilities,Gas
+7,Utilities,Trash
+8,Utilities,Internet
+9,Utilities,Mobile
+10,Transportation,Fuel
+11,Transportation,Maintenance
+12,Transportation,Insurance
+13,Transportation,Parking/Transit
+14,Food,Groceries
+15,Food,Dining Out
+16,Food,Coffee
+17,Health,Insurance
+18,Health,Copay
+19,Health,Pharmacy
+20,Personal,Clothing
+21,Personal,Hair/Beauty
+22,Personal,Subscriptions
+23,Kids/Family,Childcare
+24,Kids/Family,School
+25,Kids/Family,Activities
+26,Debt,Credit Card
+27,Debt,Student Loan
+28,Debt,Personal Loan
+29,Savings,Emergency Fund
+30,Savings,Retirement
+31,Savings,General
+32,Income,Salary
+33,Income,Bonus
+34,Income,Reimbursement
+35,Income,Other

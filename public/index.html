@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Tracker</title>
+    <!-- CDN Links -->
+    <link rel="stylesheet" href="../assets/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/3.3.0/luxon.min.js"></script>
+    <script type="module" src="../src/app.js"></script>
+</head>
+<body>
+    <!-- Header Section -->
+    <header>
+        <div class="app-title">
+            <i class="icon">💰</i>
+            <span>Budget Tracker</span>
+        </div>
+        <div class="search-bar">
+            <i class="icon">🔍</i>
+            <input type="text" id="global-search" placeholder="Search across all data...">
+        </div>
+        <div class="month-picker">
+            <label for="month-select">Viewing:</label>
+            <input type="month" id="month-select" value="2025-08">
+        </div>
+        <div class="header-actions">
+            <button id="undo-btn" class="btn btn-sm btn-outline" title="Undo last action">
+                <i class="icon">↩️</i> Undo
+            </button>
+            <button id="sync-btn" class="btn btn-sm">
+                <i class="icon">🔄</i> Rebuild Month
+            </button>
+        </div>
+    </header>
+    <!-- Tab Navigation -->
+    <nav class="tabs">
+        <div class="tab active" data-tab="dashboard">Dashboard</div>
+        <div class="tab" data-tab="bills">Bills</div>
+        <div class="tab" data-tab="income">Income</div>
+        <div class="tab" data-tab="transactions">Transactions</div>
+        <div class="tab" data-tab="budgets">Budgets</div>
+        <div class="tab" data-tab="categories">Categories</div>
+        <div class="tab" data-tab="settings">Settings</div>
+    </nav>
+    <!-- Main Content -->
+    <main>
+        <!-- Dashboard Tab -->
+        <section id="dashboard" class="tab-content active">
+            <div class="kpi-container">
+                <div class="kpi-card">
+                    <div class="kpi-title">Total Income</div>
+                    <div class="kpi-value positive-value">$5,420.00</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Total Expenses</div>
+                    <div class="kpi-value negative-value">$3,980.50</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Net Amount</div>
+                    <div class="kpi-value positive-value">$1,439.50</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Budget Utilization</div>
+                    <div class="kpi-value">73%</div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-card">
+                    <h3>Income vs Expenses</h3>
+                    <canvas id="income-expense-chart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Spending by Category</h3>
+                    <canvas id="spending-chart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Budget vs Actual</h3>
+                    <canvas id="budget-actual-chart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Recent Transactions</h2>
+                    <button class="btn btn-sm">View All</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2025-08-15</td>
+                                <td>Electricity Bill</td>
+                                <td>Utilities</td>
+                                <td class="negative-value">$185.00</td>
+                                <td><span class="badge badge-active">Paid</span></td>
+                            </tr>
+                            <tr class="overdue">
+                                <td>2025-08-10</td>
+                                <td>Internet Subscription</td>
+                                <td>Utilities</td>
+                                <td class="negative-value">$79.99</td>
+                                <td><span class="badge badge-overdue">Overdue</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-08-05</td>
+                                <td>Salary Deposit</td>
+                                <td>Income</td>
+                                <td class="positive-value">$3,200.00</td>
+                                <td><span class="badge badge-active">Received</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-08-03</td>
+                                <td>Grocery Shopping</td>
+                                <td>Food</td>
+                                <td class="negative-value">$147.30</td>
+                                <td><span class="badge badge-active">Paid</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-08-01</td>
+                                <td>Rent Payment</td>
+                                <td>Housing</td>
+                                <td class="negative-value">$1,200.00</td>
+                                <td><span class="badge badge-active">Paid</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        <!-- Other Tabs (simplified for this example) -->
+        <section id="bills" class="tab-content">
+            <div class="action-bar">
+                <h2>Bills Management</h2>
+                <button class="btn" id="open-add-bill-modal">+ Add New Bill</button>
+            </div>
+            <div class="card">
+                <p>Bills management interface would be here with full CRUD operations.</p>
+            </div>
+        </section>
+        <section id="income" class="tab-content">
+            <div class="action-bar">
+                <h2>Income Sources</h2>
+                <button class="btn">+ Add Income Source</button>
+            </div>
+            <div class="card">
+                <p>Income management interface would be here with full CRUD operations.</p>
+            </div>
+        </section>
+        <section id="transactions" class="tab-content">
+            <div class="action-bar">
+                <h2>All Transactions</h2>
+                <div class="btn-group">
+                    <button class="btn">+ Add Transaction</button>
+                    <button class="btn btn-outline">Filter</button>
+                </div>
+            </div>
+            <div class="card">
+                <p>Transactions management interface would be here with full CRUD operations.</p>
+            </div>
+        </section>
+        <section id="budgets" class="tab-content">
+            <div class="action-bar">
+                <h2>Budget Planning</h2>
+                <button class="btn">+ Create Budget</button>
+            </div>
+            <div class="card">
+                <p>Budget management interface would be here with full CRUD operations.</p>
+            </div>
+        </section>
+        <section id="categories" class="tab-content">
+            <div class="action-bar">
+                <h2>Categories & Subcategories</h2>
+                <button class="btn">+ Add Category</button>
+            </div>
+            <div class="card">
+                <p>Category management interface would be here with full CRUD operations.</p>
+            </div>
+        </section>
+        <!-- Settings Tab -->
+        <section id="settings" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">Settings & Backup</h2>
+                <div class="settings-grid">
+                    <div class="settings-panel">
+                        <h3>Data Management</h3>
+                        <div class="form-group">
+                            <button class="btn" id="select-folder-btn">Select Data Folder</button>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-outline" id="import-btn">Import CSV Files</button>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-outline" id="export-btn">Export CSV Files</button>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn" id="backup-btn">Create Backup ZIP</button>
+                        </div>
+                    </div>
+                    <div class="settings-panel">
+                        <h3>Recurrence Settings</h3>
+                        <div class="form-group">
+                            <label>Auto-materialize on load</label>
+                            <select>
+                                <option selected>Enabled</option>
+                                <option>Disabled</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Default Recurrence Rule</label>
+                            <select>
+                                <option>Monthly</option>
+                                <option>Weekly</option>
+                                <option selected>Biweekly</option>
+                                <option>Annually</option>
+                                <option>Custom</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="settings-panel">
+                        <h3>Appearance</h3>
+                        <div class="form-group">
+                            <label>Theme</label>
+                            <select>
+                                <option selected>Dark Theme</option>
+                                <option>Light Theme</option>
+                                <option>System Default</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Currency Format</label>
+                            <select>
+                                <option selected>US Dollars ($)</option>
+                                <option>Euros (€)</option>
+                                <option>British Pounds (£)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h2 class="card-title">How to Use This App</h2>
+                <div class="settings-panel">
+                    <h3>Getting Started</h3>
+                    <p>1. Click "Select Data Folder" to choose where your budget data will be stored</p>
+                    <p>2. The app will create the necessary CSV files if they don't exist</p>
+                    <p>3. Start adding your bills, income sources, and categories</p>
+                    <h3>Recurring Items</h3>
+                    <p>• Set recurrence rules for regular bills and income</p>
+                    <p>• The app will automatically create transactions based on these rules</p>
+                    <p>• Use "Rebuild Month" to regenerate transactions for the current month</p>
+                    <h3>Backup</h3>
+                    <p>• Regularly create backups using the "Create Backup ZIP" button</p>
+                    <p>• Backups include all your CSV data files</p>
+                </div>
+            </div>
+        </section>
+    </main>
+    <!-- Export Banner -->
+    <div id="export-banner" class="export-banner hidden">
+        <div>
+            <strong>Remember to Export Your Data!</strong> 
+            <span>Your changes are not saved to CSV files yet.</span>
+        </div>
+        <button class="btn btn-sm">Export Now</button>
+    </div>
+    <!-- Footer -->
+    <footer>
+        Budget Tracker App • All data stored locally • No tracking or analytics
+    </footer>
+    <!-- Modal for Adding New Bill -->
+    <div id="add-bill-modal" class="card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:999; min-width:340px; max-width:90vw; box-shadow:0 8px 32px rgba(0,0,0,0.25);">
+        <h2 class="card-title">Add New Bill</h2>
+        <form id="add-bill-form">
+            <div class="form-group">
+                <label for="bill-name">Name</label>
+                <input type="text" id="bill-name" required>
+            </div>
+            <div class="form-group">
+                <label for="bill-amount">Amount</label>
+                <input type="number" id="bill-amount" required min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="bill-recurrence">Recurrence</label>
+                <select id="bill-recurrence">
+                    <option value="Monthly">Monthly</option>
+                    <option value="Weekly">Weekly</option>
+                    <option value="Biweekly">Biweekly</option>
+                    <option value="Annually">Annually</option>
+                    <option value="Custom">Custom</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="bill-start">Start Date</label>
+                <input type="date" id="bill-start" required>
+            </div>
+            <div class="form-group">
+                <label for="bill-end">End Date</label>
+                <input type="date" id="bill-end">
+            </div>
+            <div class="form-group">
+                <label for="bill-status">Status</label>
+                <select id="bill-status">
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+            <div class="btn-group">
+                <button type="submit" class="btn">Add Bill</button>
+                <button type="button" class="btn btn-outline" id="cancel-add-bill">Cancel</button>
+            </div>
+        </form>
+    </div>
+    <!-- Modal for Adding/Editing Income -->
+    <div id="add-income-modal" class="card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:999; min-width:340px; max-width:90vw; box-shadow:0 8px 32px rgba(0,0,0,0.25);">
+        <h2 class="card-title">Add/Edit Income</h2>
+        <form id="add-income-form">
+            <div class="form-group">
+                <label for="income-source">Source</label>
+                <input type="text" id="income-source" required>
+            </div>
+            <div class="form-group">
+                <label for="income-amount">Amount</label>
+                <input type="number" id="income-amount" required min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="income-date">Date</label>
+                <input type="date" id="income-date" required>
+            </div>
+            <div class="form-group">
+                <label for="income-recurrence">Recurrence</label>
+                <select id="income-recurrence">
+                    <option value="Monthly">Monthly</option>
+                    <option value="Weekly">Weekly</option>
+                    <option value="Biweekly">Biweekly</option>
+                    <option value="Annually">Annually</option>
+                    <option value="Custom">Custom</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="income-status">Status</label>
+                <select id="income-status">
+                    <option value="Received">Received</option>
+                    <option value="Pending">Pending</option>
+                </select>
+            </div>
+            <div class="btn-group">
+                <button type="submit" class="btn">Save</button>
+                <button type="button" class="btn btn-outline" id="cancel-add-income">Cancel</button>
+            </div>
+        </form>
+    </div>
+    <!-- Modal for Adding/Editing Transaction -->
+    <div id="add-transaction-modal" class="card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:999; min-width:340px; max-width:90vw; box-shadow:0 8px 32px rgba(0,0,0,0.25);">
+        <h2 class="card-title">Add/Edit Transaction</h2>
+        <form id="add-transaction-form">
+            <div class="form-group">
+                <label for="transaction-date">Date</label>
+                <input type="date" id="transaction-date" required>
+            </div>
+            <div class="form-group">
+                <label for="transaction-description">Description</label>
+                <input type="text" id="transaction-description" required>
+            </div>
+            <div class="form-group">
+                <label for="transaction-category">Category</label>
+                <input type="text" id="transaction-category" required>
+            </div>
+            <div class="form-group">
+                <label for="transaction-amount">Amount</label>
+                <input type="number" id="transaction-amount" required min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="transaction-status">Status</label>
+                <select id="transaction-status">
+                    <option value="Paid">Paid</option>
+                    <option value="Overdue">Overdue</option>
+                    <option value="Received">Received</option>
+                </select>
+            </div>
+            <div class="btn-group">
+                <button type="submit" class="btn">Save</button>
+                <button type="button" class="btn btn-outline" id="cancel-add-transaction">Cancel</button>
+            </div>
+        </form>
+    </div>
+    <!-- Modal for Adding/Editing Budget -->
+    <div id="add-budget-modal" class="card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:999; min-width:340px; max-width:90vw; box-shadow:0 8px 32px rgba(0,0,0,0.25);">
+        <h2 class="card-title">Add/Edit Budget</h2>
+        <form id="add-budget-form">
+            <div class="form-group">
+                <label for="budget-name">Name</label>
+                <input type="text" id="budget-name" required>
+            </div>
+            <div class="form-group">
+                <label for="budget-amount">Amount</label>
+                <input type="number" id="budget-amount" required min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="budget-period">Period</label>
+                <input type="text" id="budget-period" required>
+            </div>
+            <div class="form-group">
+                <label for="budget-utilization">Utilization</label>
+                <input type="number" id="budget-utilization" min="0" max="100" step="1">
+            </div>
+            <div class="btn-group">
+                <button type="submit" class="btn">Save</button>
+                <button type="button" class="btn btn-outline" id="cancel-add-budget">Cancel</button>
+            </div>
+        </form>
+    </div>
+    <!-- Modal for Adding/Editing Category -->
+    <div id="add-category-modal" class="card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:999; min-width:340px; max-width:90vw; box-shadow:0 8px 32px rgba(0,0,0,0.25);">
+        <h2 class="card-title">Add/Edit Category</h2>
+        <form id="add-category-form">
+            <div class="form-group">
+                <label for="category-name">Category</label>
+                <input type="text" id="category-name" required>
+            </div>
+            <div class="form-group">
+                <label for="subcategory-name">Subcategory</label>
+                <input type="text" id="subcategory-name">
+            </div>
+            <div class="btn-group">
+                <button type="submit" class="btn">Save</button>
+                <button type="button" class="btn btn-outline" id="cancel-add-category">Cancel</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
