@@ -323,12 +323,6 @@ function renderCategoriesList() {
     renderTabCharts('categories', ['category','subcategory'], state.data.categories);
     filterAndSearch('categories', ['category','subcategory'], state.data.categories, ['edit','delete']);
 }
-function renderBillsList() {
-    addFilterSearchUI('bills', ['name','amount','recurrence','start_date','end_date','status']);
-    renderAnalytics('bills', ['name','amount','recurrence','start_date','end_date','status'], state.data.bills);
-    renderTabCharts('bills', ['name','amount','recurrence','start_date','end_date','status'], state.data.bills);
-    filterAndSearch('bills', ['name','amount','recurrence','start_date','end_date','status'], state.data.bills, ['edit','delete']);
-}
 
 function setupEventListeners() {
     // Tab navigation is now handled by tabNavigation.js
