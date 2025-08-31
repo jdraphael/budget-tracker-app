@@ -1,1 +1,5 @@
 id,source,amount,date,recurrence,status
+1,Salary,3500.00,2025-01-01,Monthly,Received
+2,Freelance,500.00,2025-01-15,Monthly,Received
+3,Investment Dividends,200.00,2025-01-01,Monthly,Received
+4,Bonus,1000.00,2025-06-01,Annually,Received

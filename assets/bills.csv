@@ -1,1 +1,11 @@
 id,name,amount,recurrence,start_date,end_date,status
+1,Rent,1200.00,Monthly,2025-01-01,,Active
+2,Electricity,150.00,Monthly,2025-01-01,,Active
+3,Internet,80.00,Monthly,2025-01-01,,Active
+4,Water,50.00,Monthly,2025-01-01,,Active
+5,Car Insurance,120.00,Monthly,2025-01-01,,Active
+6,Gas,60.00,Monthly,2025-01-01,,Active
+7,Groceries,400.00,Monthly,2025-01-01,,Active
+8,Phone,70.00,Monthly,2025-01-01,,Active
+9,Credit Card,200.00,Monthly,2025-01-01,,Active
+10,Netflix,15.99,Monthly,2025-01-01,,Active

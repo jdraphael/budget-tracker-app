@@ -1,1 +1,19 @@
 id,date,description,category,amount,status
+1,2025-08-01,Rent Payment,Housing,-1200.00,Paid
+2,2025-08-01,Electricity Bill,Utilities,-150.00,Paid
+3,2025-08-01,Internet Bill,Utilities,-80.00,Paid
+4,2025-08-01,Water Bill,Utilities,-50.00,Paid
+5,2025-08-01,Car Insurance,Transportation,-120.00,Paid
+6,2025-08-01,Gas Bill,Utilities,-60.00,Paid
+7,2025-08-01,Groceries,Food,-400.00,Paid
+8,2025-08-01,Phone Bill,Utilities,-70.00,Paid
+9,2025-08-01,Credit Card Payment,Debt,-200.00,Paid
+10,2025-08-01,Netflix Subscription,Personal,-15.99,Paid
+11,2025-08-01,Salary Deposit,Income,3500.00,Received
+12,2025-08-15,Freelance Payment,Income,500.00,Received
+13,2025-08-01,Investment Dividends,Income,200.00,Received
+14,2025-08-05,Grocery Shopping,Food,-150.00,Paid
+15,2025-08-10,Dining Out,Food,-75.00,Paid
+16,2025-08-12,Gas Fill-up,Transportation,-45.00,Paid
+17,2025-08-20,Clothing Purchase,Personal,-120.00,Paid
+18,2025-08-25,Coffee Shop,Food,-10.00,Paid

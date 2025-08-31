@@ -1,1 +1,7 @@
 id,name,amount,period,utilization
+1,Housing,1300.00,Monthly,92
+2,Utilities,260.00,Monthly,78
+3,Transportation,200.00,Monthly,82
+4,Food,600.00,Monthly,83
+5,Personal,300.00,Monthly,48
+6,Debt,250.00,Monthly,80

@@ -1,5 +1,6 @@
 // app.js - Budget Tracker Main JS
 import { setupTabNavigation, switchTab } from '../components/tabNavigation.js';
+import { parseCSV, calculateTotals } from '../utils/dataHelpers.js';
 
 // Luxon for date manipulation
 const DateTime = luxon.DateTime;
@@ -992,6 +993,40 @@ async function seedDefaultData(fileName) {
 
 async function loadAllData() {
     console.log('Loading data from CSV files...');
+    try {
+        const response = await fetch('../assets/bills.csv');
+        const billsText = await response.text();
+        state.data.bills = parseCSV(billsText);
+
+        const incomeResponse = await fetch('../assets/income.csv');
+        const incomeText = await incomeResponse.text();
+        state.data.income = parseCSV(incomeText);
+
+        const transactionsResponse = await fetch('../assets/transactions.csv');
+        const transactionsText = await transactionsResponse.text();
+        state.data.transactions = parseCSV(transactionsText);
+
+        const categoriesResponse = await fetch('../assets/categories.csv');
+        const categoriesText = await categoriesResponse.text();
+        state.data.categories = parseCSV(categoriesText);
+
+        const budgetsResponse = await fetch('../assets/budgets.csv');
+        const budgetsText = await budgetsResponse.text();
+        state.data.budgets = parseCSV(budgetsText);
+
+        updateDashboardKPIs();
+    } catch (error) {
+        console.error('Error loading data:', error);
+    }
+}
+
+function updateDashboardKPIs() {
+    const totals = calculateTotals(state.data);
+    // Update DOM
+    document.querySelector('.kpi-container .kpi-card:nth-child(1) .kpi-value').textContent = formatCurrency(totals.totalIncome);
+    document.querySelector('.kpi-container .kpi-card:nth-child(2) .kpi-value').textContent = formatCurrency(totals.totalExpenses);
+    document.querySelector('.kpi-container .kpi-card:nth-child(3) .kpi-value').textContent = formatCurrency(totals.netAmount);
+    document.querySelector('.kpi-container .kpi-card:nth-child(4) .kpi-value').textContent = totals.budgetUtilization + '%';
 }
 
 function materializeRecurringTransactions() {
