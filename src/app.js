@@ -1032,10 +1032,6 @@ async function createBackup() {
     }
 }
 
-function undoLastAction() {
-    alert('Last action undone. In a complete implementation, this would revert your most recent change.');
-}
-
 function formatCurrency(amount) {
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
