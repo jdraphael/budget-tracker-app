@@ -119,9 +119,12 @@ function checkUserLogin() {
     const user = localStorage.getItem('budgetAppUser');
     if (!user) showUserLogin();
 }
-// Call checkUserLogin on load
-document.addEventListener('DOMContentLoaded', function() {
+// Call checkUserLogin on load and load CSV data
+document.addEventListener('DOMContentLoaded', async function() {
     checkUserLogin();
+    // Load CSV data from assets so UI has data to render
+    await loadAllData();
+    // Initialize UI and tab navigation
     setupTabNavigation();
     window.onTabSwitch = function(tabId) {
         if (tabId === 'dashboard') renderCharts();
@@ -132,9 +135,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tabId === 'categories') renderCategoriesList();
         if (tabId === 'settings') {/* settings logic */}
     };
-    // Set initial tab
-    switchTab('dashboard');
+    // Load UI prefs (may change active tab)
     loadUIPreferences();
+    // Ensure initial tab is visible
+    switchTab(state.activeTab || 'dashboard');
     if (!('showDirectoryPicker' in window)) {
         document.getElementById('export-banner').classList.remove('hidden');
     }
@@ -823,12 +827,11 @@ function renderCharts() {
 // Add this function to render bills in the Bills tab
 function renderBillsList(sortKey = 'name', sortDir = 'asc') {
     const billsSection = document.getElementById('bills');
-    let billsTable = billsSection.querySelector('.bills-table');
-    if (!billsTable) {
-        billsTable = document.createElement('div');
-        billsTable.className = 'table-container bills-table';
-        billsSection.appendChild(billsTable);
-    }
+    // Clear existing content
+    billsSection.innerHTML = '';
+    let billsTable = document.createElement('div');
+    billsTable.className = 'table-container bills-table';
+    billsSection.appendChild(billsTable);
     // Sort bills
     let bills = [...state.data.bills];
     bills.sort((a, b) => {
@@ -997,22 +1000,27 @@ async function loadAllData() {
         const response = await fetch('../assets/bills.csv');
         const billsText = await response.text();
         state.data.bills = parseCSV(billsText);
+        console.log('Bills loaded:', state.data.bills);
 
         const incomeResponse = await fetch('../assets/income.csv');
         const incomeText = await incomeResponse.text();
         state.data.income = parseCSV(incomeText);
+        console.log('Income loaded:', state.data.income);
 
         const transactionsResponse = await fetch('../assets/transactions.csv');
         const transactionsText = await transactionsResponse.text();
         state.data.transactions = parseCSV(transactionsText);
+        console.log('Transactions loaded:', state.data.transactions);
 
         const categoriesResponse = await fetch('../assets/categories.csv');
         const categoriesText = await categoriesResponse.text();
         state.data.categories = parseCSV(categoriesText);
+        console.log('Categories loaded:', state.data.categories);
 
         const budgetsResponse = await fetch('../assets/budgets.csv');
         const budgetsText = await budgetsResponse.text();
         state.data.budgets = parseCSV(budgetsText);
+        console.log('Budgets loaded:', state.data.budgets);
 
         updateDashboardKPIs();
     } catch (error) {
