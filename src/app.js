@@ -855,12 +855,12 @@ function renderBillsList(sortKey = 'name', sortDir = 'asc') {
     } else {
         for (const bill of bills) {
             html += `<tr data-id="${bill.id}">
-                <td>${bill.name}</td>
-                <td>${formatCurrency(bill.amount)}</td>
-                <td>${bill.recurrence}</td>
-                <td>${bill.start_date}</td>
+                <td>${bill.name || '-'}</td>
+                <td>${formatCurrency(Number(bill.amount) || 0)}</td>
+                <td>${bill.recurrence || '-'}</td>
+                <td>${bill.start_date || '-'}</td>
                 <td>${bill.end_date || '-'}</td>
-                <td>${bill.status}</td>
+                <td>${bill.status || 'Unknown'}</td>
                 <td>
                     <button class="btn btn-sm btn-outline edit-bill">Edit</button>
                     <button class="btn btn-sm btn-outline delete-bill">Delete</button>

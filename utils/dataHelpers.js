@@ -1,13 +1,24 @@
 // utils/dataHelpers.js
 export function parseCSV(text) {
-    const lines = text.trim().split('\n');
-    const headers = lines[0].split(',');
+    if (!text) return [];
+    // split on both LF and CRLF and remove any surrounding whitespace
+    const lines = text.trim().split(/\r?\n/).filter(l => l.trim().length > 0);
+    if (!lines.length) return [];
+    // trim headers and remove BOM if present
+    const headers = lines[0].split(',').map(h => h.trim().replace(/^\uFEFF/, ''));
     const data = [];
     for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(',');
         const obj = {};
         headers.forEach((header, index) => {
-            obj[header] = values[index];
+            let raw = values[index] !== undefined ? values[index].trim() : '';
+            // convert numeric-looking fields to numbers where appropriate
+            if (/amount|utilization/i.test(header) && raw !== '') {
+                const num = Number(raw);
+                obj[header] = isNaN(num) ? raw : num;
+            } else {
+                obj[header] = raw;
+            }
         });
         data.push(obj);
     }
