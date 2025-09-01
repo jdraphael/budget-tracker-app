@@ -59,13 +59,13 @@ function importCSV(tab, columns) {
         const file = input.files[0];
         if (!file) return;
         const text = await file.text();
-        const lines = text.trim().split(/\r?\n/);
-        const header = lines[0].split(',');
-        const items = lines.slice(1).map(line => {
-            const vals = line.split(',');
-            const obj = { id: Date.now() + Math.random() };
-            header.forEach((h, idx) => { obj[h] = vals[idx]; });
-            return obj;
+        // Use shared CSV parser for consistency and trimming/number handling
+        const parsed = parseCSV(text) || [];
+        // Ensure each row has an id for downstream editing/deleting even if CSV lacks one
+        const timestamp = Date.now();
+        const items = parsed.map((row, idx) => {
+            const hasId = Object.prototype.hasOwnProperty.call(row, 'id') && String(row.id).trim() !== '';
+            return hasId ? row : { id: `${timestamp}_${idx}`, ...row };
         });
         state.data[tab] = items;
         if (tab === 'bills') { saveBillsToCSV(); renderBillsList(); }
@@ -124,6 +124,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     checkUserLogin();
     // Load CSV data from assets so UI has data to render
     await loadAllData();
+    // Compute heights for sticky header and tabs so table thead can sit below them
+    function updateStickyOffsets() {
+        const header = document.querySelector('header');
+        const tabs = document.querySelector('.tabs');
+        const headerHeight = header ? header.offsetHeight : 0;
+        const tabsHeight = tabs ? tabs.offsetHeight : 0;
+        document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+        document.documentElement.style.setProperty('--tabs-height', `${tabsHeight}px`);
+    }
+    requestAnimationFrame(updateStickyOffsets);
+    window.addEventListener('resize', updateStickyOffsets);
     // Initialize UI and tab navigation
     setupTabNavigation();
     window.onTabSwitch = function(tabId) {

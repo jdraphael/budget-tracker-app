@@ -25,10 +25,42 @@ export function parseCSV(text) {
     return data;
 }
 
-export function calculateTotals(data) {
-    const totalIncome = data.income.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
-    const totalExpenses = data.transactions.filter(t => parseFloat(t.amount) < 0).reduce((sum, t) => sum + Math.abs(parseFloat(t.amount || 0)), 0);
+export function calculateTotals(data, options = {}) {
+    const { includePositiveTransactionsAsIncome = true } = options;
+
+    const incomeFromIncome = (data.income || []).reduce((sum, item) => {
+        const v = parseFloat(item.amount || 0);
+        return sum + (isNaN(v) ? 0 : v);
+    }, 0);
+
+    const incomeFromTransactions = includePositiveTransactionsAsIncome
+        ? (data.transactions || [])
+            .filter(t => parseFloat(t.amount || 0) > 0)
+            .reduce((sum, t) => {
+                const v = parseFloat(t.amount || 0);
+                return sum + (isNaN(v) ? 0 : v);
+            }, 0)
+        : 0;
+
+    const totalIncome = incomeFromIncome + incomeFromTransactions;
+
+    const totalExpenses = (data.transactions || [])
+        .filter(t => parseFloat(t.amount || 0) < 0)
+        .reduce((sum, t) => {
+            const v = Math.abs(parseFloat(t.amount || 0));
+            return sum + (isNaN(v) ? 0 : v);
+        }, 0);
+
     const netAmount = totalIncome - totalExpenses;
-    const budgetUtilization = data.budgets.length ? (data.budgets.reduce((sum, b) => sum + parseFloat(b.utilization || 0), 0) / data.budgets.length).toFixed(0) : 0;
+
+    const budgetUtilization = (data.budgets && data.budgets.length)
+        ? (
+            data.budgets.reduce((sum, b) => {
+                const v = parseFloat(b.utilization || 0);
+                return sum + (isNaN(v) ? 0 : v);
+            }, 0) / data.budgets.length
+        ).toFixed(0)
+        : 0;
+
     return { totalIncome, totalExpenses, netAmount, budgetUtilization };
 }

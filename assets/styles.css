@@ -18,6 +18,8 @@
     --transition: all 0.25s cubic-bezier(.4,0,.2,1);
     --glass-bg: rgba(36, 39, 54, 0.7);
     --glass-blur: 12px;
+    --header-height: 0px;
+    --tabs-height: 0px;
 }
 
 * {
@@ -45,7 +47,7 @@ header {
     padding: 1.5rem 2rem;
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 1000;
     display: flex;
     flex-wrap: wrap;
     gap: 1.5rem;
@@ -124,6 +126,10 @@ header {
     margin: 1rem 2rem 0 2rem;
     box-shadow: var(--shadow);
     overflow-x: auto;
+    position: sticky;
+    /* will be set via JS --header-height */
+    top: var(--header-height, 0px);
+    z-index: 900;
 }
 
 .tab {
@@ -160,7 +166,9 @@ header {
 main {
     flex: 1;
     padding: 2rem 2rem 1rem 2rem;
-    overflow: auto;
+    /* Allow the whole page to scroll so sticky elements (header, tabs, table thead)
+       are positioned relative to the viewport. */
+    overflow: visible;
 }
 
 .tab-content {
@@ -256,6 +264,8 @@ main {
 }
 
 .table-container {
+    /* allow horizontal scrolling only; page will scroll vertically so the table header
+       can stick to the viewport when the user scrolls down */
     overflow-x: auto;
 }
 
@@ -272,7 +282,10 @@ table {
 thead {
     background: var(--bg-800);
     position: sticky;
-    top: 120px;
+    /* stick directly below header + tabs using runtime-updated CSS vars */
+    top: calc(var(--header-height, 0px) + var(--tabs-height, 0px));
+    /* higher z-index so header stays above rows and other elements */
+    z-index: 1100;
 }
 
 th {
