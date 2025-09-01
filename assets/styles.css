@@ -49,6 +49,25 @@ header {
     flex-wrap: wrap;
     gap: 1.5rem;
     align-items: center;
+    pointer-events: none; /* Allow clicks to pass through empty header background so tabs are clickable when overlapped */
+}
+
+/* Reduce header padding on very short viewports to avoid overlap/stacking issues */
+@media (max-height: 500px) {
+    header {
+        padding: 0.6rem 1rem;
+        margin: 0.5rem 1rem 0 1rem;
+    }
+    .tabs {
+        margin: 0.5rem 1rem 0 1rem;
+    }
+    main {
+        padding: 0 1rem 1rem 1rem;
+    }
+}
+
+header * {
+    pointer-events: auto; /* keep header controls interactive */
 }
 
 .app-title {
@@ -125,7 +144,8 @@ header {
     overflow-x: auto;
     position: sticky;
     top: var(--header-height); /* Stick below the header */
-    z-index: 900;
+    z-index: 1002; /* Ensure tabs are above other elements */
+    pointer-events: auto;
 }
 
 .tab {
@@ -159,18 +179,14 @@ header {
     border-radius: 2px;
 }
 
-main {
-    padding: 0 2rem 1rem 2rem;
-}
-
+/* Tab content visibility */
 .tab-content {
     display: none;
-    padding-top: 1rem; /* Add space for the sticky tabs */
+    padding-top: 1rem; /* space for sticky tabs */
 }
-
 .tab-content.active {
     display: block;
-    animation: fadeIn 0.3s ease;
+    animation: fadeIn 0.25s ease;
 }
 
 @keyframes fadeIn {
@@ -257,12 +273,15 @@ main {
 }
 
 .table-container {
+    position: relative;
     overflow-x: auto;
+    /* Remove any vertical overflow to preserve sticky context */
 }
 
 table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate; /* sticky works more reliably with separate */
+    border-spacing: 0;         /* preserve collapsed look */
     margin-bottom: 2rem;
     background: var(--bg-700);
     border-radius: var(--border-radius);
@@ -271,9 +290,17 @@ table {
 
 thead {
     background: var(--bg-800);
+    /* Do not make the thead sticky; make individual th cells sticky for better support */
+    position: relative;
+    z-index: 1;
+}
+
+/* Make each header cell sticky so it pins under the tabs across browsers */
+thead th {
     position: sticky;
-    top: var(--thead-top-offset);
-    z-index: 800; /* Lower than tabs */
+    top: var(--thead-top-offset, calc(var(--header-height, 64px) + var(--tabs-height, 48px)));
+    z-index: 1001;
+    background: var(--bg-800);
 }
 
 th {

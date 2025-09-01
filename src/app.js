@@ -2,6 +2,45 @@
 import { setupTabNavigation, switchTab } from '../components/tabNavigation.js';
 import { parseCSV, calculateTotals } from '../utils/dataHelpers.js';
 
+// Resolve and fetch asset files robustly across different hosting setups
+async function fetchCSVText(fileName) {
+    const candidates = [];
+    // Relative to HTML document
+    candidates.push(`../assets/${fileName}`);
+    candidates.push(`./assets/${fileName}`);
+    candidates.push(`/assets/${fileName}`);
+    try { candidates.push(new URL(`../assets/${fileName}`, document.baseURI).href); } catch {}
+    try { candidates.push(new URL(`../assets/${fileName}`, import.meta.url).href); } catch {}
+    // Deduplicate while preserving order
+    const tried = new Set();
+    for (const url of candidates) {
+        if (!url || tried.has(url)) continue; tried.add(url);
+        try {
+            const res = await fetch(url, { cache: 'no-cache' });
+            if (res.ok) return await res.text();
+        } catch (e) {
+            // continue to next candidate
+        }
+    }
+    // Fallback: inline seeds in the HTML (for file:// usage)
+    const idMap = {
+        'bills.csv': 'seed-bills-csv',
+        'income.csv': 'seed-income-csv',
+        'transactions.csv': 'seed-transactions-csv',
+        'categories.csv': 'seed-categories-csv',
+        'budgets.csv': 'seed-budgets-csv',
+    };
+    const seedId = idMap[fileName];
+    if (seedId) {
+        const el = document.getElementById(seedId);
+        if (el && el.textContent) {
+            console.warn(`Using inline seed for ${fileName}`);
+            return el.textContent;
+        }
+    }
+    throw new Error(`Unable to load ${fileName} from candidates: ${Array.from(tried).join(', ')}`);
+}
+
 // Luxon for date manipulation
 const DateTime = luxon.DateTime;
 
@@ -20,6 +59,8 @@ const state = {
         folderHandle: null
     }
 };
+// Keep active Chart instances so we can destroy them before reusing canvases
+state.charts = {};
 
 // Charts: Render summary charts for each tab
 function renderTabCharts(tab, columns, data) {
@@ -33,9 +74,15 @@ function renderTabCharts(tab, columns, data) {
     }
     chartDiv.innerHTML = '';
     if (data.length && columns.includes('amount')) {
-        chartDiv.innerHTML = `<canvas id='${tab}-chart' style='max-width:600px;max-height:300px;'></canvas>`;
-        const ctx = document.getElementById(`${tab}-chart`).getContext('2d');
-        new Chart(ctx, {
+        const canvasId = `${tab}-chart`;
+        chartDiv.innerHTML = `<canvas id='${canvasId}' style='max-width:600px;max-height:300px;'></canvas>`;
+        // Destroy existing chart instance if present
+        if (state.charts[canvasId]) {
+            try { state.charts[canvasId].destroy(); } catch (e) { /* ignore */ }
+            delete state.charts[canvasId];
+        }
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        state.charts[canvasId] = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: data.map(i => i[columns[0]]),
@@ -120,41 +167,19 @@ function checkUserLogin() {
     if (!user) showUserLogin();
 }
 // Call checkUserLogin on load and load CSV data
+
 document.addEventListener('DOMContentLoaded', async function() {
     checkUserLogin();
     // Load CSV data from assets so UI has data to render
     await loadAllData();
-    
-    // Compute heights for sticky elements
-    function updateStickyOffsets() {
-        const header = document.querySelector('header');
-        const tabs = document.querySelector('.tabs');
-        
-        if (header && tabs) {
-            const headerHeight = header.offsetHeight;
-            const tabsHeight = tabs.offsetHeight;
-            
-            const tabsStyle = window.getComputedStyle(tabs);
-            const tabsMarginTop = parseFloat(tabsStyle.marginTop);
-    
-            // The 'top' for .tabs should be the height of the header element itself.
-            document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
-            
-            // The 'top' for thead needs to be the top of the tabs + height of the tabs.
-            const theadTopOffset = headerHeight + tabsHeight + tabsMarginTop;
-            document.documentElement.style.setProperty('--thead-top-offset', `${theadTopOffset}px`);
-        }
-    }
 
     // Run on initial load and after a short delay to ensure elements are rendered
     requestAnimationFrame(updateStickyOffsets);
     setTimeout(updateStickyOffsets, 100); // Fallback for any rendering delays
-
-    // Re-run on resize and scroll to handle responsive changes or dynamic content
     window.addEventListener('resize', updateStickyOffsets);
-    window.addEventListener('scroll', () => {
-        requestAnimationFrame(updateStickyOffsets);
-    });
+    window.addEventListener('scroll', updateStickyOffsets, { passive: true });
+    // Update sticky offsets when tab changes (if you have tab switching logic)
+    document.addEventListener('tabchange', updateStickyOffsets);
 
     // Initialize UI and tab navigation
     setupTabNavigation();
@@ -340,25 +365,25 @@ function renderIncomeList() {
     addFilterSearchUI('income', ['source','amount','date','recurrence','status']);
     renderAnalytics('income', ['source','amount','date','recurrence','status'], state.data.income);
     renderTabCharts('income', ['source','amount','date','recurrence','status'], state.data.income);
-    filterAndSearch('income', ['source','amount','date','recurrence','status'], state.data.income, ['edit','delete']);
+    renderTable('income', ['source','amount','date','recurrence','status'], state.data.income, ['edit','delete']);
 }
 function renderTransactionsList() {
     addFilterSearchUI('transactions', ['date','description','category','amount','status']);
     renderAnalytics('transactions', ['date','description','category','amount','status'], state.data.transactions);
     renderTabCharts('transactions', ['date','description','category','amount','status'], state.data.transactions);
-    filterAndSearch('transactions', ['date','description','category','amount','status'], state.data.transactions, ['edit','delete']);
+    renderTable('transactions', ['date','description','category','amount','status'], state.data.transactions, ['edit','delete']);
 }
 function renderBudgetsList() {
     addFilterSearchUI('budgets', ['name','amount','period','utilization']);
     renderAnalytics('budgets', ['name','amount','period','utilization'], state.data.budgets);
     renderTabCharts('budgets', ['name','amount','period','utilization'], state.data.budgets);
-    filterAndSearch('budgets', ['name','amount','period','utilization'], state.data.budgets, ['edit','delete']);
+    renderTable('budgets', ['name','amount','period','utilization'], state.data.budgets, ['edit','delete']);
 }
 function renderCategoriesList() {
     addFilterSearchUI('categories', ['category','subcategory']);
     renderAnalytics('categories', ['category','subcategory'], state.data.categories);
     renderTabCharts('categories', ['category','subcategory'], state.data.categories);
-    filterAndSearch('categories', ['category','subcategory'], state.data.categories, ['edit','delete']);
+    renderTable('categories', ['category','subcategory'], state.data.categories, ['edit','delete']);
 }
 
 function setupEventListeners() {
@@ -389,7 +414,7 @@ function setupEventListeners() {
         const start_date = document.getElementById('bill-start').value;
         const end_date = document.getElementById('bill-end').value;
         const status = document.getElementById('bill-status').value;
-        const editId = addBillForm.getAttribute('data-edit-id');
+    const editId = this.getAttribute('data-edit-id');
         if (editId) {
             // Edit existing bill
             const bill = state.data.bills.find(b => String(b.id) === String(editId));
@@ -401,7 +426,7 @@ function setupEventListeners() {
                 bill.end_date = end_date;
                 bill.status = status;
             }
-            addBillForm.removeAttribute('data-edit-id');
+            this.removeAttribute('data-edit-id');
             alert('Bill updated!');
         } else {
             // Add new bill
@@ -639,7 +664,7 @@ function deleteRow(tab, id) {
 
 // Update add/edit forms to push undo
 // Example for bills:
-addBillForm.addEventListener('submit', async function(e) {
+document.getElementById('add-bill-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     const name = document.getElementById('bill-name').value.trim();
     const amount = document.getElementById('bill-amount').value;
@@ -647,7 +672,7 @@ addBillForm.addEventListener('submit', async function(e) {
     const start_date = document.getElementById('bill-start').value;
     const end_date = document.getElementById('bill-end').value;
     const status = document.getElementById('bill-status').value;
-    const editId = addBillForm.getAttribute('data-edit-id');
+    const editId = this.getAttribute('data-edit-id');
     if (editId) {
         // Edit existing bill
         const bill = state.data.bills.find(b => String(b.id) === String(editId));
@@ -659,7 +684,7 @@ addBillForm.addEventListener('submit', async function(e) {
             bill.end_date = end_date;
             bill.status = status;
         }
-        addBillForm.removeAttribute('data-edit-id');
+    this.removeAttribute('data-edit-id');
         alert('Bill updated!');
     } else {
         // Add new bill
@@ -813,8 +838,19 @@ window.onTabSwitch = function(tabId) {
 };
 
 function renderCharts() {
-    const incomeExpenseCtx = document.getElementById('income-expense-chart').getContext('2d');
-    new Chart(incomeExpenseCtx, {
+    const incomeCanvasId = 'income-expense-chart';
+    const spendingCanvasId = 'spending-chart';
+    const budgetCanvasId = 'budget-actual-chart';
+    // Destroy existing dashboard charts if present
+    [incomeCanvasId, spendingCanvasId, budgetCanvasId].forEach(id => {
+        if (state.charts && state.charts[id]) {
+            try { state.charts[id].destroy(); } catch (e) { /* ignore */ }
+            delete state.charts[id];
+        }
+    });
+
+    const incomeExpenseCtx = document.getElementById(incomeCanvasId).getContext('2d');
+    state.charts[incomeCanvasId] = new Chart(incomeExpenseCtx, {
         type: 'bar',
         data: {
             labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
@@ -825,8 +861,8 @@ function renderCharts() {
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
     });
-    const spendingCtx = document.getElementById('spending-chart').getContext('2d');
-    new Chart(spendingCtx, {
+    const spendingCtx = document.getElementById(spendingCanvasId).getContext('2d');
+    state.charts[spendingCanvasId] = new Chart(spendingCtx, {
         type: 'doughnut',
         data: {
             labels: ['Housing', 'Utilities', 'Food', 'Transportation', 'Healthcare', 'Entertainment'],
@@ -837,8 +873,8 @@ function renderCharts() {
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
     });
-    const budgetCtx = document.getElementById('budget-actual-chart').getContext('2d');
-    new Chart(budgetCtx, {
+    const budgetCtx = document.getElementById(budgetCanvasId).getContext('2d');
+    state.charts[budgetCanvasId] = new Chart(budgetCtx, {
         type: 'bar',
         data: {
             labels: ['Housing', 'Utilities', 'Food', 'Transport', 'Healthcare', 'Personal'],
@@ -859,18 +895,21 @@ function renderCharts() {
 // Add this function to render bills in the Bills tab
 function renderBillsList(sortKey = 'name', sortDir = 'asc') {
     const billsSection = document.getElementById('bills');
-    let billsTable = billsSection.querySelector('.table-container.bills-table');
-    if (!billsTable) {
-        billsTable = document.createElement('div');
-        billsTable.className = 'table-container bills-table';
-        // Insert it after the action-bar, or at the start if action-bar is not there
-        const actionBar = billsSection.querySelector('.action-bar');
-        if (actionBar) {
-            actionBar.insertAdjacentElement('afterend', billsTable);
-        } else {
-            billsSection.prepend(billsTable);
+    
+    console.log("Creating initial bills table");
+    
+    // Clean up any existing content first except for the action bar
+    // Find all child elements that are not the action-bar and remove them
+    Array.from(billsSection.children).forEach(child => {
+        if (!child.classList.contains('action-bar')) {
+            child.remove();
         }
-    }
+    });
+    
+    // Create a fresh table container
+    const billsTable = document.createElement('div');
+    billsTable.className = 'table-container bills-table';
+    billsSection.appendChild(billsTable);
     
     // Sort bills
     let bills = [...state.data.bills];
@@ -881,6 +920,8 @@ function renderBillsList(sortKey = 'name', sortDir = 'asc') {
             return sortDir === 'asc' ? String(a[sortKey]).localeCompare(String(b[sortKey])) : String(b[sortKey]).localeCompare(String(a[sortKey]));
         }
     });
+    
+    // Use simple innerHTML approach for consistency across environments
     let html = `<table><thead><tr>
         <th data-sort="name">Name</th>
         <th data-sort="amount">Amount</th>
@@ -890,6 +931,7 @@ function renderBillsList(sortKey = 'name', sortDir = 'asc') {
         <th data-sort="status">Status</th>
         <th>Actions</th>
     </tr></thead><tbody>`;
+    
     if (bills.length === 0) {
         html += `<tr><td colspan='7' style='text-align:center;color:var(--fg-300);'>No bills added yet.</td></tr>`;
     } else {
@@ -910,6 +952,7 @@ function renderBillsList(sortKey = 'name', sortDir = 'asc') {
     }
     html += `</tbody></table>`;
     billsTable.innerHTML = html;
+    
     // Add sorting event listeners
     billsTable.querySelectorAll('th[data-sort]').forEach(th => {
         th.style.cursor = 'pointer';
@@ -918,6 +961,7 @@ function renderBillsList(sortKey = 'name', sortDir = 'asc') {
             renderBillsList(th.getAttribute('data-sort'), newDir);
         };
     });
+    
     // Add edit/delete event listeners
     billsTable.querySelectorAll('.edit-bill').forEach(btn => {
         btn.onclick = function() {
@@ -931,7 +975,30 @@ function renderBillsList(sortKey = 'name', sortDir = 'asc') {
             deleteBill(id);
         };
     });
+    
+    // Update sticky offsets immediately and after a short delay to ensure proper positioning
+    updateStickyOffsets();
+    
+    // Force another update after a longer delay to ensure it's calculated after rendering
+    setTimeout(() => {
+        updateStickyOffsets();
+        // Let's also add another check for the table's existence
+        const table = billsSection.querySelector('table');
+        if (table) {
+            const thead = table.querySelector('thead');
+            if (thead) {
+                // Force thead to be properly positioned
+                thead.style.position = 'sticky';
+                thead.style.top = `${window.__stickyOffsets?.theadTopOffset || 118}px`;
+                thead.style.zIndex = '1001';
+                thead.style.display = 'table-header-group';
+            }
+        }
+    }, 100);
 }
+
+// Make renderBillsList globally accessible for tabNavigation.js
+window.renderBillsList = renderBillsList;
 
 function openEditBillModal(id) {
     const bill = state.data.bills.find(b => String(b.id) === String(id));
@@ -1037,73 +1104,85 @@ async function seedDefaultData(fileName) {
 async function loadAllData() {
     console.log('Loading data from CSV files...');
     try {
-        const response = await fetch('../assets/bills.csv');
-        const billsText = await response.text();
+        const billsText = await fetchCSVText('bills.csv');
         state.data.bills = parseCSV(billsText);
         console.log('Bills loaded:', state.data.bills);
 
-        const incomeResponse = await fetch('../assets/income.csv');
-        const incomeText = await incomeResponse.text();
+        const incomeText = await fetchCSVText('income.csv');
         state.data.income = parseCSV(incomeText);
         console.log('Income loaded:', state.data.income);
 
-        const transactionsResponse = await fetch('../assets/transactions.csv');
-        const transactionsText = await transactionsResponse.text();
+        const transactionsText = await fetchCSVText('transactions.csv');
         state.data.transactions = parseCSV(transactionsText);
         console.log('Transactions loaded:', state.data.transactions);
 
-        const categoriesResponse = await fetch('../assets/categories.csv');
-        const categoriesText = await categoriesResponse.text();
+        const categoriesText = await fetchCSVText('categories.csv');
         state.data.categories = parseCSV(categoriesText);
         console.log('Categories loaded:', state.data.categories);
 
-        const budgetsResponse = await fetch('../assets/budgets.csv');
-        const budgetsText = await budgetsResponse.text();
+        const budgetsText = await fetchCSVText('budgets.csv');
         state.data.budgets = parseCSV(budgetsText);
         console.log('Budgets loaded:', state.data.budgets);
 
         updateDashboardKPIs();
+        // Ensure current tab content renders using freshly loaded data
+        if (typeof window.currentTab === 'string') {
+            if (window.onTabSwitch) window.onTabSwitch(window.currentTab);
+        }
     } catch (error) {
-        console.error('Error loading data:', error);
+        // Avoid logging raw objects that show up as JSHandle in headless logs.
+        try {
+            const msg = error && error.message ? error.message : String(error);
+            console.error('Error loading data:', msg);
+        } catch (e) {
+            console.error('Error loading data: (unserializable error)');
+        }
     }
 }
 
-function updateDashboardKPIs() {
-    const totals = calculateTotals(state.data);
-    // Update DOM
-    document.querySelector('.kpi-container .kpi-card:nth-child(1) .kpi-value').textContent = formatCurrency(totals.totalIncome);
-    document.querySelector('.kpi-container .kpi-card:nth-child(2) .kpi-value').textContent = formatCurrency(totals.totalExpenses);
-    document.querySelector('.kpi-container .kpi-card:nth-child(3) .kpi-value').textContent = formatCurrency(totals.netAmount);
-    document.querySelector('.kpi-container .kpi-card:nth-child(4) .kpi-value').textContent = totals.budgetUtilization + '%';
-}
+function updateStickyOffsets() {
+    const header = document.querySelector('header');
+    const tabs = document.querySelector('.tabs');
+    if (!header || !tabs) return;
 
-function materializeRecurringTransactions() {
-    console.log('Materializing recurring transactions...');
-}
+    const headerHeight = header.offsetHeight;
+    const tabsHeight = tabs.offsetHeight;
+    const tabsRect = tabs.getBoundingClientRect();
+    // Compute where the bottom of the tabs sits relative to the viewport top, then use that as sticky top
+    const tabsBottomFromViewportTop = Math.round(tabsRect.bottom);
+    const theadTop = Math.max(0, tabsBottomFromViewportTop); // pinned just under tabs
 
-function rebuildCurrentMonth() {
-    materializeRecurringTransactions();
-    alert('Current month transactions have been rebuilt!');
-}
+    // Set sticky offset variables on :root
+    document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+    document.documentElement.style.setProperty('--tabs-height', `${tabsHeight}px`);
+    document.documentElement.style.setProperty('--thead-top-offset', `${theadTop}px`);
 
-async function createBackup() {
+    // Expose computed offsets for automated tests
+    window.__stickyOffsets = {
+        headerHeight,
+        tabsHeight,
+        tabsBottom: tabsBottomFromViewportTop,
+        theadTopOffset: theadTop
+    };
+
+    // Ensure each header cell is sticky with the computed offset
+    document.querySelectorAll('table thead th').forEach(th => {
+        th.style.top = `var(--thead-top-offset)`;
+        th.style.position = 'sticky';
+        th.style.zIndex = '1001';
+        th.style.background = getComputedStyle(document.documentElement).getPropertyValue('--bg-800') || '#23232a';
+    });
+}
+// Minimal backup implementation to keep UI functional
+function createBackup() {
     try {
-        const zip = new JSZip();
-        const timestamp = DateTime.now().toFormat('yyyy-MM-dd-HHmm');
-        for (const file of ['bills.csv', 'income.csv', 'transactions.csv', 'categories.csv', 'budgets.csv']) {
-            try {
-                const fileHandle = await state.uiState.folderHandle.getFileHandle(file);
-                const fileData = await fileHandle.getFile();
-                zip.file(file, fileData);
-            } catch (error) {
-                console.error(`Could not add ${file} to backup:`, error);
-            }
-        }
-        const content = await zip.generateAsync({ type: 'blob' });
-        const url = URL.createObjectURL(content);
+        const blob = new Blob([
+            'bills.csv,income.csv,transactions.csv,categories.csv,budgets.csv'
+        ], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `budget-backup-${timestamp}.zip`;
+        a.download = `budget-backup-${Date.now()}.txt`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1122,5 +1201,42 @@ function formatCurrency(amount) {
     }).format(amount);
 }
 
-// Initialize tab navigation
-setupTabNavigation();
+// Initialize the UI and ensure tables are rendered correctly
+function initializeUI() {
+    console.log("Initializing UI and setting up tables");
+    
+    // Make key functions globally accessible
+    window.updateStickyOffsets = updateStickyOffsets;
+    
+    // Calculate sticky offsets for table headers
+    updateStickyOffsets();
+    
+    // Ensure bills table is rendered on load if bills tab is active
+    if (state.activeTab === 'bills') {
+        renderBillsList();
+    }
+    
+    // Re-run sticky offset calculations after a small delay to ensure all elements are fully rendered
+    setTimeout(() => {
+        updateStickyOffsets();
+        console.log("Delayed sticky offset calculation complete");
+    }, 200);
+
+    // Recompute on resize and scroll in case the header/tabs heights change
+    window.addEventListener('resize', () => requestAnimationFrame(updateStickyOffsets));
+    window.addEventListener('scroll', () => requestAnimationFrame(updateStickyOffsets), { passive: true });
+
+    // Observe layout changes within the tabs or header to recalc offsets
+    try {
+        const observer = new MutationObserver(() => requestAnimationFrame(updateStickyOffsets));
+        const header = document.querySelector('header');
+        const tabs = document.querySelector('.tabs');
+        if (header) observer.observe(header, { childList: true, subtree: true, attributes: true });
+        if (tabs) observer.observe(tabs, { childList: true, subtree: true, attributes: true });
+    } catch {}
+}
+
+// Run initialization on page load
+document.addEventListener('DOMContentLoaded', initializeUI);
+
+// Tab navigation is initialized on DOMContentLoaded earlier

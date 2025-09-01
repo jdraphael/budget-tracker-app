@@ -1,0 +1,12 @@
+{
+  "name": "budget-tracker-app",
+  "version": "0.1.0",
+  "description": "Budget Tracker - local demo",
+  "scripts": {
+    "start": "npx http-server ./public -p 5500",
+    "smoke-test": "node ./scripts/smoke-test.js"
+  },
+  "devDependencies": {
+    "puppeteer": "^21.0.0"
+  }
+}

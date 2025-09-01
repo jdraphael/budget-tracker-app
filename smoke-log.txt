@@ -1,0 +1,340 @@
+2025-09-01T17:09:42.296Z Launching Puppeteer
+[1m[43m[30m
+  Puppeteer old Headless deprecation warning:[0m[33m
+    In the near future `headless: true` will default to the new Headless mode
+    for Chrome instead of the old Headless implementation. For more
+    information, please see https://developer.chrome.com/articles/new-headless/.
+    Consider opting in early by passing `headless: "new"` to `puppeteer.launch()`
+    If you encounter any bugs, please report them to https://github.com/puppeteer/puppeteer/issues/new/choose.[0m
+
+
+2025-09-01T17:09:42.754Z --- Testing viewport: desktop (1366x900)
+2025-09-01T17:09:43.029Z [PAGE] Live reload enabled.
+2025-09-01T17:09:43.223Z [PAGE] Loading data from CSV files...
+2025-09-01T17:09:43.231Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:09:43.236Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:09:43.241Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:09:43.245Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:09:43.249Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:09:43.252Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:09:43.303Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:09:43.356Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:09:45.098Z Found tabs: [
+  'dashboard',
+  'bills',
+  'income',
+  'transactions',
+  'budgets',
+  'categories',
+  'settings'
+]
+2025-09-01T17:09:45.099Z Clicking tab: dashboard
+2025-09-01T17:09:45.101Z [PAGE] [tabNavigation] tab clicked: dashboard
+2025-09-01T17:09:45.101Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:09:45.909Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\desktop-dashboard.png
+2025-09-01T17:09:45.910Z Clicking tab: bills
+2025-09-01T17:09:45.912Z [PAGE] [tabNavigation] tab clicked: bills
+2025-09-01T17:09:45.913Z [PAGE] [tabNavigation] switchTab: bills
+2025-09-01T17:09:46.057Z [PAGE] Loading data from CSV files...
+2025-09-01T17:09:46.109Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:09:46.116Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:09:46.122Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:09:46.128Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:09:46.136Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:09:46.138Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:09:46.182Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:09:46.255Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:09:46.835Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\desktop-bills.png
+2025-09-01T17:09:46.836Z Clicking tab: income
+2025-09-01T17:09:46.845Z [PAGE] [tabNavigation] tab clicked: income
+2025-09-01T17:09:46.846Z [PAGE] [tabNavigation] switchTab: income
+2025-09-01T17:09:47.009Z [PAGE] Loading data from CSV files...
+2025-09-01T17:09:47.026Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:09:47.033Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:09:47.043Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:09:47.049Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:09:47.058Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:09:47.059Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:09:47.136Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:09:47.193Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:09:47.855Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\desktop-income.png
+2025-09-01T17:09:47.856Z Clicking tab: transactions
+2025-09-01T17:09:47.860Z [PAGE] [tabNavigation] tab clicked: transactions
+2025-09-01T17:09:47.860Z [PAGE] [tabNavigation] switchTab: transactions
+2025-09-01T17:09:48.030Z [PAGE] Loading data from CSV files...
+2025-09-01T17:09:48.043Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:09:48.049Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:09:48.057Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:09:48.065Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:09:48.077Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:09:48.078Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:09:48.136Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:09:48.180Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:09:48.829Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\desktop-transactions.png
+2025-09-01T17:09:48.829Z Clicking tab: budgets
+2025-09-01T17:09:48.832Z [PAGE] [tabNavigation] tab clicked: budgets
+2025-09-01T17:09:48.833Z [PAGE] [tabNavigation] switchTab: budgets
+2025-09-01T17:09:48.981Z [PAGE] Loading data from CSV files...
+2025-09-01T17:09:48.987Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:09:48.993Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:09:49.000Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:09:49.007Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:09:49.014Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:09:49.016Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:09:49.066Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:09:49.129Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:09:49.700Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\desktop-budgets.png
+2025-09-01T17:09:49.701Z Clicking tab: categories
+2025-09-01T17:09:49.704Z [PAGE] [tabNavigation] tab clicked: categories
+2025-09-01T17:09:49.705Z [PAGE] [tabNavigation] switchTab: categories
+2025-09-01T17:09:49.898Z [PAGE] Loading data from CSV files...
+2025-09-01T17:09:49.912Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:09:49.923Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:09:49.941Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:09:49.954Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:09:49.971Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:09:49.973Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:09:50.050Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:09:50.078Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:09:50.660Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\desktop-categories.png
+2025-09-01T17:09:50.660Z Clicking tab: settings
+2025-09-01T17:09:50.670Z [PAGE] [tabNavigation] tab clicked: settings
+2025-09-01T17:09:50.670Z [PAGE] [tabNavigation] switchTab: settings
+2025-09-01T17:09:51.839Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\desktop-settings.png
+2025-09-01T17:09:51.867Z [PAGE] [tabNavigation] tab clicked: bills
+2025-09-01T17:09:51.867Z [PAGE] [tabNavigation] switchTab: bills
+2025-09-01T17:09:53.163Z Saved sticky screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\desktop-bills-scrolled.png
+
+2025-09-01T17:09:53.164Z --- Testing viewport: tablet (900x800)
+2025-09-01T17:09:53.178Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:09:58.221Z [PAGE] Loading data from CSV files...
+2025-09-01T17:09:58.239Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:09:58.251Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:09:58.262Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:09:58.273Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:09:58.284Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:09:58.286Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:09:58.343Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:09:58.389Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:00.102Z Found tabs: [
+  'dashboard',
+  'bills',
+  'income',
+  'transactions',
+  'budgets',
+  'categories',
+  'settings'
+]
+2025-09-01T17:10:00.103Z Clicking tab: dashboard
+2025-09-01T17:10:00.104Z [PAGE] [tabNavigation] tab clicked: dashboard
+2025-09-01T17:10:00.104Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:10:00.766Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\tablet-dashboard.png
+2025-09-01T17:10:00.766Z Clicking tab: bills
+2025-09-01T17:10:00.768Z [PAGE] [tabNavigation] tab clicked: bills
+2025-09-01T17:10:00.769Z [PAGE] [tabNavigation] switchTab: bills
+2025-09-01T17:10:00.915Z [PAGE] Loading data from CSV files...
+2025-09-01T17:10:00.926Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:10:00.945Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:10:00.951Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:10:00.958Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:10:00.963Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:10:00.965Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:10:01.011Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:01.070Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:01.525Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\tablet-bills.png
+2025-09-01T17:10:01.525Z Clicking tab: income
+2025-09-01T17:10:01.529Z [PAGE] [tabNavigation] tab clicked: income
+2025-09-01T17:10:01.529Z [PAGE] [tabNavigation] switchTab: income
+2025-09-01T17:10:01.701Z [PAGE] Loading data from CSV files...
+2025-09-01T17:10:01.712Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:10:01.718Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:10:01.725Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:10:01.731Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:10:01.738Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:10:01.740Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:10:01.849Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:02.064Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:02.372Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\tablet-income.png
+2025-09-01T17:10:02.372Z Clicking tab: transactions
+2025-09-01T17:10:02.377Z [PAGE] [tabNavigation] tab clicked: transactions
+2025-09-01T17:10:02.378Z [PAGE] [tabNavigation] switchTab: transactions
+2025-09-01T17:10:02.563Z [PAGE] Loading data from CSV files...
+2025-09-01T17:10:02.575Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:10:02.590Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:10:02.617Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:10:02.630Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:10:02.649Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:10:02.650Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:10:02.741Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:02.771Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:05.045Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\tablet-transactions.png
+2025-09-01T17:10:05.045Z Clicking tab: budgets
+2025-09-01T17:10:05.051Z [PAGE] [tabNavigation] tab clicked: budgets
+2025-09-01T17:10:05.051Z [PAGE] [tabNavigation] switchTab: budgets
+2025-09-01T17:10:05.438Z [PAGE] Loading data from CSV files...
+2025-09-01T17:10:05.469Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:10:05.511Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:10:05.544Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:10:05.590Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:10:05.627Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:10:05.643Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:10:05.748Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:05.773Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:13.084Z Tab content #budgets did not become active within timeout
+2025-09-01T17:10:13.656Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\tablet-budgets.png
+2025-09-01T17:10:13.657Z Clicking tab: categories
+2025-09-01T17:10:13.658Z [PAGE] [tabNavigation] tab clicked: categories
+2025-09-01T17:10:13.658Z [PAGE] [tabNavigation] switchTab: categories
+2025-09-01T17:10:13.807Z [PAGE] Loading data from CSV files...
+2025-09-01T17:10:13.813Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:10:13.817Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:10:13.824Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:10:13.828Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:10:13.833Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:10:13.833Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:10:13.861Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:13.935Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:14.461Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\tablet-categories.png
+2025-09-01T17:10:14.461Z Clicking tab: settings
+2025-09-01T17:10:14.465Z [PAGE] [tabNavigation] tab clicked: settings
+2025-09-01T17:10:14.465Z [PAGE] [tabNavigation] switchTab: settings
+2025-09-01T17:10:14.652Z [PAGE] Loading data from CSV files...
+2025-09-01T17:10:14.658Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:10:14.665Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:10:14.673Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:10:14.679Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:10:14.687Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:10:14.687Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:10:14.750Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:14.798Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:15.397Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\tablet-settings.png
+2025-09-01T17:10:15.468Z [PAGE] [tabNavigation] tab clicked: bills
+2025-09-01T17:10:15.468Z [PAGE] [tabNavigation] switchTab: bills
+2025-09-01T17:10:15.599Z [PAGE] Loading data from CSV files...
+2025-09-01T17:10:15.615Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:10:15.638Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:10:15.655Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:10:15.668Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:10:15.680Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:10:15.682Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:10:15.760Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:15.832Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:16.847Z Saved sticky screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\tablet-bills-scrolled.png
+
+2025-09-01T17:10:16.847Z --- Testing viewport: mobile (412x915)
+2025-09-01T17:10:16.879Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:17.203Z [PAGE] Loading data from CSV files...
+2025-09-01T17:10:17.226Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:10:17.230Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:10:17.238Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:10:17.247Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:10:17.253Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:10:17.255Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:10:17.304Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:17.360Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:19.008Z Found tabs: [
+  'dashboard',
+  'bills',
+  'income',
+  'transactions',
+  'budgets',
+  'categories',
+  'settings'
+]
+2025-09-01T17:10:19.009Z Clicking tab: dashboard
+2025-09-01T17:10:19.010Z [PAGE] [tabNavigation] tab clicked: dashboard
+2025-09-01T17:10:19.010Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:10:19.665Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\mobile-dashboard.png
+2025-09-01T17:10:19.665Z Clicking tab: bills
+2025-09-01T17:10:19.667Z [PAGE] [tabNavigation] tab clicked: bills
+2025-09-01T17:10:19.667Z [PAGE] [tabNavigation] switchTab: bills
+2025-09-01T17:10:19.813Z [PAGE] Loading data from CSV files...
+2025-09-01T17:10:19.818Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:10:19.822Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:10:19.828Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:10:19.832Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:10:19.838Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:10:19.840Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:10:19.874Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:19.957Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:20.354Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\mobile-bills.png
+2025-09-01T17:10:20.354Z Clicking tab: income
+2025-09-01T17:10:20.357Z [PAGE] [tabNavigation] tab clicked: income
+2025-09-01T17:10:20.358Z [PAGE] [tabNavigation] switchTab: income
+2025-09-01T17:10:20.548Z [PAGE] Loading data from CSV files...
+2025-09-01T17:10:20.559Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:10:20.570Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:10:20.580Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:10:20.591Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:10:20.624Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:10:20.626Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:10:20.711Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:20.753Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:21.169Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\mobile-income.png
+2025-09-01T17:10:21.169Z Clicking tab: transactions
+2025-09-01T17:10:21.173Z [PAGE] [tabNavigation] tab clicked: transactions
+2025-09-01T17:10:21.173Z [PAGE] [tabNavigation] switchTab: transactions
+2025-09-01T17:10:21.332Z [PAGE] Loading data from CSV files...
+2025-09-01T17:10:21.349Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:10:21.416Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:10:21.434Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:10:21.451Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:10:21.487Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:10:21.490Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:10:21.559Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:21.596Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:22.137Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\mobile-transactions.png
+2025-09-01T17:10:22.137Z Clicking tab: budgets
+2025-09-01T17:10:22.143Z [PAGE] [tabNavigation] tab clicked: budgets
+2025-09-01T17:10:22.143Z [PAGE] [tabNavigation] switchTab: budgets
+2025-09-01T17:10:22.331Z [PAGE] Loading data from CSV files...
+2025-09-01T17:10:22.342Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:10:22.351Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:10:22.363Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:10:22.375Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:10:22.384Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:10:22.387Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:10:22.458Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:22.489Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:22.905Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\mobile-budgets.png
+2025-09-01T17:10:22.905Z Clicking tab: categories
+2025-09-01T17:10:22.908Z [PAGE] [tabNavigation] tab clicked: categories
+2025-09-01T17:10:22.908Z [PAGE] [tabNavigation] switchTab: categories
+2025-09-01T17:10:23.561Z [PAGE] Loading data from CSV files...
+2025-09-01T17:10:23.579Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:10:23.589Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:10:23.639Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:10:23.762Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:10:23.763Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:10:23.763Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:10:23.783Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\mobile-categories.png
+2025-09-01T17:10:23.783Z Clicking tab: settings
+2025-09-01T17:10:23.832Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:23.866Z [PAGE] [tabNavigation] tab clicked: settings
+2025-09-01T17:10:23.867Z [PAGE] [tabNavigation] switchTab: settings
+2025-09-01T17:10:23.872Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:23.966Z [PAGE] Loading data from CSV files...
+2025-09-01T17:10:23.983Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:10:23.992Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:10:24.002Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:10:24.011Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:10:24.019Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:10:24.022Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:10:24.109Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:24.158Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:31.871Z Tab content #settings did not become active within timeout
+2025-09-01T17:10:32.482Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\mobile-settings.png
+2025-09-01T17:10:32.501Z [PAGE] [tabNavigation] tab clicked: bills
+2025-09-01T17:10:32.501Z [PAGE] [tabNavigation] switchTab: bills
+2025-09-01T17:10:32.649Z [PAGE] Loading data from CSV files...
+2025-09-01T17:10:32.665Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T17:10:32.673Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T17:10:32.677Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T17:10:32.684Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T17:10:32.689Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T17:10:32.691Z [PAGE] [tabNavigation] switchTab: dashboard
+2025-09-01T17:10:32.735Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:32.799Z [PAGE] Sticky Offsets Updated: JSHandle@object
+2025-09-01T17:10:33.735Z Saved sticky screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\mobile-bills-scrolled.png
+
+SMOKE TEST PASSED: No console errors detected.

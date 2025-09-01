@@ -1,0 +1,273 @@
+2025-09-01T18:14:38.647Z Launching Puppeteer
+[1m[43m[30m
+  Puppeteer old Headless deprecation warning:[0m[33m
+    In the near future `headless: true` will default to the new Headless mode
+    for Chrome instead of the old Headless implementation. For more
+    information, please see https://developer.chrome.com/articles/new-headless/.
+    Consider opting in early by passing `headless: "new"` to `puppeteer.launch()`
+    If you encounter any bugs, please report them to https://github.com/puppeteer/puppeteer/issues/new/choose.[0m
+
+
+2025-09-01T18:14:39.215Z --- Testing viewport: desktop (1366x900)
+2025-09-01T18:14:39.615Z [PAGE] Live reload enabled.
+2025-09-01T18:14:39.701Z [PAGE] Loading data from CSV files...
+2025-09-01T18:14:39.730Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:14:39.743Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:14:39.756Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:14:39.762Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:14:39.767Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:14:41.613Z Found tabs: [
+  'dashboard',
+  'bills',
+  'income',
+  'transactions',
+  'budgets',
+  'categories',
+  'settings'
+]
+2025-09-01T18:14:41.613Z Clicking tab: dashboard
+2025-09-01T18:14:42.364Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\desktop-dashboard.png
+2025-09-01T18:14:42.364Z Clicking tab: bills
+2025-09-01T18:14:42.366Z [PAGE] Creating initial bills table
+2025-09-01T18:14:42.502Z [PAGE] Loading data from CSV files...
+2025-09-01T18:14:42.509Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:14:42.513Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:14:42.517Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:14:42.522Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:14:42.527Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:14:43.109Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\desktop-bills.png
+2025-09-01T18:14:43.110Z Clicking tab: income
+2025-09-01T18:14:43.247Z [PAGE] Loading data from CSV files...
+2025-09-01T18:14:43.257Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:14:43.260Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:14:43.264Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:14:43.268Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:14:43.272Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:14:43.826Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\desktop-income.png
+2025-09-01T18:14:43.827Z Clicking tab: transactions
+2025-09-01T18:14:43.973Z [PAGE] Loading data from CSV files...
+2025-09-01T18:14:43.979Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:14:43.982Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:14:43.987Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:14:43.991Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:14:43.995Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:14:44.543Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\desktop-transactions.png
+2025-09-01T18:14:44.543Z Clicking tab: budgets
+2025-09-01T18:14:44.681Z [PAGE] Loading data from CSV files...
+2025-09-01T18:14:44.691Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:14:44.695Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:14:44.699Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:14:44.704Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:14:44.708Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:14:45.247Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\desktop-budgets.png
+2025-09-01T18:14:45.247Z Clicking tab: categories
+2025-09-01T18:14:45.378Z [PAGE] Loading data from CSV files...
+2025-09-01T18:14:45.386Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:14:45.394Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:14:45.398Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:14:45.402Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:14:45.406Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:14:46.110Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\desktop-categories.png
+2025-09-01T18:14:46.111Z Clicking tab: settings
+2025-09-01T18:14:46.289Z [PAGE] Loading data from CSV files...
+2025-09-01T18:14:46.307Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:14:46.318Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:14:46.382Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:14:46.418Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:14:46.452Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:14:47.266Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\desktop-settings.png
+2025-09-01T18:14:47.316Z [PAGE] Creating initial bills table
+2025-09-01T18:14:47.464Z [PAGE] Loading data from CSV files...
+2025-09-01T18:14:47.487Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:14:47.515Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:14:47.524Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:14:47.537Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:14:47.555Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:14:48.952Z Saved sticky screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\desktop-bills-scrolled.png
+2025-09-01T18:14:49.144Z [PAGE] Loading data from CSV files...
+2025-09-01T18:14:49.161Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:14:49.171Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:14:49.199Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:14:49.219Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:14:49.233Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:14:51.502Z VISUAL ASSERTION FAILED: thead is not below tabs { ok: false, reason: 'missing-elements' }
+2025-09-01T18:14:51.503Z See screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\desktop-bills-scrolled.png
+2025-09-01T18:14:51.503Z DOM snapshot written to: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\desktop-bills-dom.html
+
+2025-09-01T18:14:51.503Z --- Testing viewport: tablet (900x800)
+2025-09-01T18:14:51.837Z [PAGE] Loading data from CSV files...
+2025-09-01T18:14:51.847Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:14:51.857Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:14:51.889Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:14:51.899Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:14:51.909Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:14:53.577Z Found tabs: [
+  'dashboard',
+  'bills',
+  'income',
+  'transactions',
+  'budgets',
+  'categories',
+  'settings'
+]
+2025-09-01T18:14:53.578Z Clicking tab: dashboard
+2025-09-01T18:14:54.360Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\tablet-dashboard.png
+2025-09-01T18:14:54.360Z Clicking tab: bills
+2025-09-01T18:14:54.364Z [PAGE] Creating initial bills table
+2025-09-01T18:14:55.048Z [PAGE] Loading data from CSV files...
+2025-09-01T18:14:55.074Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:14:55.093Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:14:55.151Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:14:55.501Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:14:55.505Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:14:55.527Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\tablet-bills.png
+2025-09-01T18:14:55.527Z Clicking tab: income
+2025-09-01T18:14:55.732Z Tab content #income did not become active within timeout
+2025-09-01T18:14:55.840Z [PAGE] Loading data from CSV files...
+2025-09-01T18:14:55.886Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:14:55.899Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:14:55.914Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:14:55.997Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:14:56.018Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:14:56.663Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\tablet-income.png
+2025-09-01T18:14:56.663Z Clicking tab: transactions
+2025-09-01T18:14:56.847Z [PAGE] Loading data from CSV files...
+2025-09-01T18:14:56.862Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:14:56.872Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:14:56.879Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:14:56.891Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:14:56.905Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:14:57.482Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\tablet-transactions.png
+2025-09-01T18:14:57.482Z Clicking tab: budgets
+2025-09-01T18:14:57.673Z [PAGE] Loading data from CSV files...
+2025-09-01T18:14:57.683Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:14:57.693Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:14:57.704Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:14:57.712Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:14:57.735Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:14:58.323Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\tablet-budgets.png
+2025-09-01T18:14:58.323Z Clicking tab: categories
+2025-09-01T18:14:58.821Z [PAGE] Loading data from CSV files...
+2025-09-01T18:14:58.841Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:14:58.856Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:14:58.862Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:14:58.867Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:14:58.873Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:14:59.196Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\tablet-categories.png
+2025-09-01T18:14:59.197Z Clicking tab: settings
+2025-09-01T18:14:59.366Z [PAGE] Loading data from CSV files...
+2025-09-01T18:14:59.384Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:14:59.396Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:14:59.406Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:14:59.415Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:14:59.425Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:15:00.102Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\tablet-settings.png
+2025-09-01T18:15:00.149Z [PAGE] Creating initial bills table
+2025-09-01T18:15:00.288Z [PAGE] Loading data from CSV files...
+2025-09-01T18:15:00.304Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:15:00.315Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:15:00.332Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:15:00.345Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:15:00.357Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:15:01.580Z Saved sticky screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\tablet-bills-scrolled.png
+2025-09-01T18:15:01.747Z [PAGE] Loading data from CSV files...
+2025-09-01T18:15:01.789Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:15:01.803Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:15:01.812Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:15:01.825Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:15:01.834Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:15:04.236Z VISUAL ASSERTION FAILED: thead is not below tabs { ok: false, reason: 'missing-elements' }
+2025-09-01T18:15:04.237Z See screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\tablet-bills-scrolled.png
+2025-09-01T18:15:04.237Z DOM snapshot written to: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\tablet-bills-dom.html
+
+2025-09-01T18:15:04.237Z --- Testing viewport: mobile (412x915)
+2025-09-01T18:15:04.394Z [PAGE] Loading data from CSV files...
+2025-09-01T18:15:04.405Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:15:04.417Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:15:04.424Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:15:04.437Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:15:04.445Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:15:06.088Z Found tabs: [
+  'dashboard',
+  'bills',
+  'income',
+  'transactions',
+  'budgets',
+  'categories',
+  'settings'
+]
+2025-09-01T18:15:06.088Z Clicking tab: dashboard
+2025-09-01T18:15:06.678Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\mobile-dashboard.png
+2025-09-01T18:15:06.678Z Clicking tab: bills
+2025-09-01T18:15:06.680Z [PAGE] Creating initial bills table
+2025-09-01T18:15:06.811Z [PAGE] Loading data from CSV files...
+2025-09-01T18:15:06.817Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:15:06.821Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:15:06.825Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:15:06.828Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:15:06.832Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:15:07.289Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\mobile-bills.png
+2025-09-01T18:15:07.289Z Clicking tab: income
+2025-09-01T18:15:07.417Z [PAGE] Loading data from CSV files...
+2025-09-01T18:15:07.423Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:15:07.428Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:15:07.432Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:15:07.437Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:15:07.441Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:15:07.930Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\mobile-income.png
+2025-09-01T18:15:07.930Z Clicking tab: transactions
+2025-09-01T18:15:08.068Z [PAGE] Loading data from CSV files...
+2025-09-01T18:15:08.086Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:15:08.091Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:15:08.096Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:15:08.101Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:15:08.107Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:15:08.583Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\mobile-transactions.png
+2025-09-01T18:15:08.583Z Clicking tab: budgets
+2025-09-01T18:15:08.731Z [PAGE] Loading data from CSV files...
+2025-09-01T18:15:08.741Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:15:08.746Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:15:08.754Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:15:08.761Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:15:08.770Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:15:09.301Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\mobile-budgets.png
+2025-09-01T18:15:09.302Z Clicking tab: categories
+2025-09-01T18:15:09.444Z [PAGE] Loading data from CSV files...
+2025-09-01T18:15:09.454Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:15:09.459Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:15:09.464Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:15:09.469Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:15:09.476Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:15:10.020Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\mobile-categories.png
+2025-09-01T18:15:10.020Z Clicking tab: settings
+2025-09-01T18:15:10.192Z [PAGE] Loading data from CSV files...
+2025-09-01T18:15:10.198Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:15:10.205Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:15:10.212Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:15:10.218Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:15:10.227Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:15:10.714Z Saved screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\mobile-settings.png
+2025-09-01T18:15:10.749Z [PAGE] Creating initial bills table
+2025-09-01T18:15:10.877Z [PAGE] Loading data from CSV files...
+2025-09-01T18:15:10.883Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:15:10.890Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:15:10.897Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:15:10.909Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:15:10.917Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:15:11.945Z Saved sticky screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\mobile-bills-scrolled.png
+2025-09-01T18:15:12.114Z [PAGE] Loading data from CSV files...
+2025-09-01T18:15:12.124Z [PAGE] Bills loaded: JSHandle@array
+2025-09-01T18:15:12.133Z [PAGE] Income loaded: JSHandle@array
+2025-09-01T18:15:12.142Z [PAGE] Transactions loaded: JSHandle@array
+2025-09-01T18:15:12.150Z [PAGE] Categories loaded: JSHandle@array
+2025-09-01T18:15:12.159Z [PAGE] Budgets loaded: JSHandle@array
+2025-09-01T18:15:14.543Z VISUAL ASSERTION FAILED: thead is not below tabs { ok: false, reason: 'missing-elements' }
+2025-09-01T18:15:14.543Z See screenshot: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\mobile-bills-scrolled.png
+2025-09-01T18:15:14.543Z DOM snapshot written to: D:\BudgetAppProject2\budget-tracker-app\test-screenshots\mobile-bills-dom.html
+
+SMOKE TEST FAILED: Console errors detected: 3
+Sample error: {
+  text: 'VISUAL_ASSERTION_FAILED: thead-not-below-tabs',
+  detail: { ok: false, reason: 'missing-elements' },
+  dom: 'D:\\BudgetAppProject2\\budget-tracker-app\\test-screenshots\\desktop-bills-dom.html'
+}

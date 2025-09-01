@@ -1,0 +1,205 @@
+*** Begin Patch
+*** Update File: D:\BudgetAppProject2\budget-tracker-app\src\app.js
+*** Update at: 2025-09-01T18:16:00Z
+
+// Compute heights for sticky elements - moved outside to be globally accessible
+function updateStickyOffsets() {
+    const header = document.querySelector('header');
+    const tabs = document.querySelector('.tabs');
+    if (header && tabs) {
+        const headerHeight = header.offsetHeight;
+        const tabsHeight = tabs.offsetHeight;
+        const tabsStyle = window.getComputedStyle(tabs);
+        const tabsMarginTop = parseFloat(tabsStyle.marginTop) || 0;
+
+        // Compute the top offset for thead as the sum of header + tabs heights (plus any margin)
+        // Make sure it's just 1 pixel below the tabs for visual separation but no gap
+        const theadTop = Math.round(headerHeight + tabsHeight + tabsMarginTop);
+
+        // Set sticky offset variables on :root
+        document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+        document.documentElement.style.setProperty('--tabs-height', `${tabsHeight}px`);
+        document.documentElement.style.setProperty('--thead-top-offset', `${theadTop}px`);
+
+        // expose computed offsets for automated tests
+        window.__stickyOffsets = {
+            headerHeight,
+            tabsHeight,
+            tabsMarginTop,
+            theadTopOffset: theadTop
+        };
+
+        // Update debug overlay (create it once)
+        try {
+            let overlay = document.getElementById('sticky-debug-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'sticky-debug-overlay';
+                overlay.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:11000;background:rgba(0,0,0,0.7);color:#fff;padding:8px 10px;border-radius:8px;font-family:monospace;font-size:12px;line-height:1.25;pointer-events:none;max-width:320px;opacity:0.95';
+                document.body.appendChild(overlay);
+            }
+
+            const tabsRect = tabs.getBoundingClientRect();
+            const table = document.querySelector('#bills table');
+            const thead = table ? table.querySelector('thead') : null;
+            const theadRectTop = thead ? Math.round(thead.getBoundingClientRect().top) : 'n/a';
+            const tabsBottom = Math.round(tabsRect.bottom);
+
+            overlay.innerHTML = `header: ${headerHeight}px<br>tabs: ${tabsHeight}px (mt ${tabsMarginTop}px)<br>--thead-top-offset: ${theadTop}px<br>tabs.bottom: ${tabsBottom}px<br>thead.top: ${theadRectTop}`;
+        } catch (e) {
+            // Non-critical: overlay failures shouldn't break app
+            // eslint-disable-next-line no-console
+            console.warn('sticky overlay update failed:', e && e.message ? e.message : e);
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    checkUserLogin();
+    // Load CSV data from assets so UI has data to render
+    await loadAllData();
+
+    // Run on initial load and after a short delay to ensure elements are rendered
+    requestAnimationFrame(updateStickyOffsets);
+    setTimeout(updateStickyOffsets, 100); // Fallback for any rendering delays
+    window.addEventListener('resize', updateStickyOffsets);
+    window.addEventListener('scroll', updateStickyOffsets, { passive: true });
+    // Update sticky offsets when tab changes (if you have tab switching logic)
+    document.addEventListener('tabchange', updateStickyOffsets);
+
+    // Initialize UI and tab navigation
+    setupTabNavigation();
+    window.onTabSwitch = function(tabId) {
+        if (tabId === 'dashboard') renderCharts();
+        if (tabId === 'bills') renderBillsList();
+        if (tabId === 'income') renderIncomeList();
+        if (tabId === 'transactions') renderTransactionsList();
+        if (tabId === 'budgets') renderBudgetsList();
+        if (tabId === 'categories') renderCategoriesList();
+        if (tabId === 'settings') {/* settings logic */}
+    };
+    // Load UI prefs (may change active tab)
+    loadUIPreferences();
+    // Ensure initial tab is visible
+    switchTab(state.activeTab || 'dashboard');
+    if (!('showDirectoryPicker' in window)) {
+        document.getElementById('export-banner').classList.remove('hidden');
+    }
+});
+
+// Add this function to render bills in the Bills tab
+function renderBillsList(sortKey = 'name', sortDir = 'asc') {
+    const billsSection = document.getElementById('bills');
+    
+    console.log("Creating initial bills table");
+    
+    // Clean up any existing content first except for the action bar
+    // Find all child elements that are not the action-bar and remove them
+    Array.from(billsSection.children).forEach(child => {
+        if (!child.classList.contains('action-bar')) {
+            child.remove();
+        }
+    });
+    
+    // Create a fresh table container
+    const billsTable = document.createElement('div');
+    billsTable.className = 'table-container bills-table';
+    billsSection.appendChild(billsTable);
+    
+    // Sort bills
+    let bills = [...state.data.bills];
+    bills.sort((a, b) => {
+        if (sortKey === 'amount') {
+            return sortDir === 'asc' ? a.amount - b.amount : b.amount - a.amount;
+        } else {
+            return sortDir === 'asc' ? String(a[sortKey]).localeCompare(String(b[sortKey])) : String(b[sortKey]).localeCompare(String(a[sortKey]));
+        }
+    });
+    
+    // Create a table with proper structure to ensure the header is at row 1
+    const tableElement = document.createElement('table');
+    tableElement.className = 'bills-table-element';
+    billsTable.appendChild(tableElement);
+    
+    // Create thead element first to ensure it's the first row
+    const thead = document.createElement('thead');
+    thead.innerHTML = `<tr>
+        <th data-sort="name">Name</th>
+        <th data-sort="amount">Amount</th>
+        <th data-sort="recurrence">Recurrence</th>
+        <th data-sort="start_date">Start</th>
+        <th data-sort="end_date">End</th>
+        <th data-sort="status">Status</th>
+        <th>Actions</th>
+    </tr>`;
+    tableElement.appendChild(thead);
+    
+    // Create tbody after the thead
+    const tbody = document.createElement('tbody');
+    
+    if (bills.length === 0) {
+        const emptyRow = document.createElement('tr');
+        emptyRow.innerHTML = `<td colspan='7' style='text-align:center;color:var(--fg-300);'>No bills added yet.</td>`;
+        tbody.appendChild(emptyRow);
+    } else {
+        for (const bill of bills) {
+            const row = document.createElement('tr');
+            row.setAttribute('data-id', bill.id);
+            row.innerHTML = `
+                <td>${bill.name || '-'}</td>
+                <td>${formatCurrency(Number(bill.amount) || 0)}</td>
+                <td>${bill.recurrence || '-'}</td>
+                <td>${bill.start_date || '-'}</td>
+                <td>${bill.end_date || '-'}</td>
+                <td>${bill.status || 'Unknown'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline edit-bill">Edit</button>
+                    <button class="btn btn-sm btn-outline delete-bill">Delete</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        }
+    }
+    tableElement.appendChild(tbody);
+    
+    // Add sorting event listeners
+    tableElement.querySelectorAll('th[data-sort]').forEach(th => {
+        th.style.cursor = 'pointer';
+        th.onclick = () => {
+            let newDir = sortDir === 'asc' ? 'desc' : 'asc';
+            renderBillsList(th.getAttribute('data-sort'), newDir);
+        };
+    });
+    
+    // Add edit/delete event listeners
+    tableElement.querySelectorAll('.edit-bill').forEach(btn => {
+        btn.onclick = function() {
+            const id = this.closest('tr').getAttribute('data-id');
+            openEditBillModal(id);
+        };
+    });
+    tableElement.querySelectorAll('.delete-bill').forEach(btn => {
+        btn.onclick = function() {
+            const id = this.closest('tr').getAttribute('data-id');
+            deleteBill(id);
+        };
+    });
+    
+    // Update sticky offsets immediately and after a short delay to ensure proper positioning
+    updateStickyOffsets();
+    setTimeout(updateStickyOffsets, 50);
+}
+
+*** Update File: D:\BudgetAppProject2\budget-tracker-app\assets\styles.css
+*** Update at: 2025-09-01T18:16:00Z
+
+thead {
+    background: var(--bg-800);
+    position: sticky;
+    top: var(--thead-top-offset, calc(var(--header-height, 64px) + var(--tabs-height, 48px)));
+    z-index: 1001;
+    background: var(--bg-800);
+    display: table-header-group; /* Ensures it's the first row */
+}
+
+*** End Patch

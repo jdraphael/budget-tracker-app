@@ -36,14 +36,14 @@
         </div>
     </header>
     <!-- Tab Navigation -->
-    <nav class="tabs">
-        <div class="tab active" data-tab="dashboard">Dashboard</div>
-        <div class="tab" data-tab="bills">Bills</div>
-        <div class="tab" data-tab="income">Income</div>
-        <div class="tab" data-tab="transactions">Transactions</div>
-        <div class="tab" data-tab="budgets">Budgets</div>
-        <div class="tab" data-tab="categories">Categories</div>
-        <div class="tab" data-tab="settings">Settings</div>
+    <nav class="tabs" role="tablist" aria-label="Primary">
+        <div class="tab active" role="tab" tabindex="0" aria-selected="true" data-tab="dashboard">Dashboard</div>
+        <div class="tab" role="tab" tabindex="0" aria-selected="false" data-tab="bills">Bills</div>
+        <div class="tab" role="tab" tabindex="0" aria-selected="false" data-tab="income">Income</div>
+        <div class="tab" role="tab" tabindex="0" aria-selected="false" data-tab="transactions">Transactions</div>
+        <div class="tab" role="tab" tabindex="0" aria-selected="false" data-tab="budgets">Budgets</div>
+        <div class="tab" role="tab" tabindex="0" aria-selected="false" data-tab="categories">Categories</div>
+        <div class="tab" role="tab" tabindex="0" aria-selected="false" data-tab="settings">Settings</div>
     </nav>
     <!-- Main Content -->
     <main>
@@ -144,9 +144,7 @@
                 <h2>Bills Management</h2>
                 <button class="btn" id="open-add-bill-modal">+ Add New Bill</button>
             </div>
-            <div class="card">
-                <p>Bills management interface would be here with full CRUD operations.</p>
-            </div>
+            <!-- Removed card placeholder as it interferes with dynamic table generation -->
         </section>
         <section id="income" class="tab-content">
             <div class="action-bar">
@@ -278,6 +276,90 @@
     <footer>
         Budget Tracker App • All data stored locally • No tracking or analytics
     </footer>
+    
+    <!-- Inline CSV fallbacks for offline/file:// usage -->
+    <script type="text/csv" id="seed-bills-csv">id,name,amount,recurrence,start_date,end_date,status
+1,Rent,1200.00,Monthly,2025-01-01,,Active
+2,Electricity,150.00,Monthly,2025-01-01,,Active
+3,Internet,80.00,Monthly,2025-01-01,,Active
+4,Water,50.00,Monthly,2025-01-01,,Active
+5,Car Insurance,120.00,Monthly,2025-01-01,,Active
+6,Gas,60.00,Monthly,2025-01-01,,Active
+7,Groceries,400.00,Monthly,2025-01-01,,Active
+8,Phone,70.00,Monthly,2025-01-01,,Active
+9,Credit Card,200.00,Monthly,2025-01-01,,Active
+10,Netflix,15.99,Monthly,2025-01-01,,Active</script>
+
+    <script type="text/csv" id="seed-income-csv">id,source,amount,date,recurrence,status
+1,Salary,3500.00,2025-01-01,Monthly,Received
+2,Freelance,500.00,2025-01-15,Monthly,Received
+3,Investment Dividends,200.00,2025-01-01,Monthly,Received
+4,Bonus,1000.00,2025-06-01,Annually,Received</script>
+
+    <script type="text/csv" id="seed-transactions-csv">id,date,description,category,amount,status
+1,2025-08-01,Rent Payment,Housing,-1200.00,Paid
+2,2025-08-01,Electricity Bill,Utilities,-150.00,Paid
+3,2025-08-01,Internet Bill,Utilities,-80.00,Paid
+4,2025-08-01,Water Bill,Utilities,-50.00,Paid
+5,2025-08-01,Car Insurance,Transportation,-120.00,Paid
+6,2025-08-01,Gas Bill,Utilities,-60.00,Paid
+7,2025-08-01,Groceries,Food,-400.00,Paid
+8,2025-08-01,Phone Bill,Utilities,-70.00,Paid
+9,2025-08-01,Credit Card Payment,Debt,-200.00,Paid
+10,2025-08-01,Netflix Subscription,Personal,-15.99,Paid
+11,2025-08-01,Salary Deposit,Income,3500.00,Received
+12,2025-08-15,Freelance Payment,Income,500.00,Received
+13,2025-08-01,Investment Dividends,Income,200.00,Received
+14,2025-08-05,Grocery Shopping,Food,-150.00,Paid
+15,2025-08-10,Dining Out,Food,-75.00,Paid
+16,2025-08-12,Gas Fill-up,Transportation,-45.00,Paid
+17,2025-08-20,Clothing Purchase,Personal,-120.00,Paid
+18,2025-08-25,Coffee Shop,Food,-10.00,Paid</script>
+
+    <script type="text/csv" id="seed-categories-csv">id,category,subcategory
+1,Housing,Rent/Mortgage
+2,Housing,HOA
+3,Housing,Repairs
+4,Utilities,Electric
+5,Utilities,Water
+6,Utilities,Gas
+7,Utilities,Trash
+8,Utilities,Internet
+9,Utilities,Mobile
+10,Transportation,Fuel
+11,Transportation,Maintenance
+12,Transportation,Insurance
+13,Transportation,Parking/Transit
+14,Food,Groceries
+15,Food,Dining Out
+16,Food,Coffee
+17,Health,Insurance
+18,Health,Copay
+19,Health,Pharmacy
+20,Personal,Clothing
+21,Personal,Hair/Beauty
+22,Personal,Subscriptions
+23,Kids/Family,Childcare
+24,Kids/Family,School
+25,Kids/Family,Activities
+26,Debt,Credit Card
+27,Debt,Student Loan
+28,Debt,Personal Loan
+29,Savings,Emergency Fund
+30,Savings,Retirement
+31,Savings,General
+32,Income,Salary
+33,Income,Bonus
+34,Income,Reimbursement
+35,Income,Other</script>
+
+    <script type="text/csv" id="seed-budgets-csv">id,name,amount,period,utilization
+1,Housing,1300.00,Monthly,92
+2,Utilities,260.00,Monthly,78
+3,Transportation,200.00,Monthly,82
+4,Food,600.00,Monthly,83
+5,Personal,300.00,Monthly,48
+6,Debt,250.00,Monthly,80</script>
     <!-- Modal for Adding New Bill -->
     <div id="add-bill-modal" class="card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:999; min-width:340px; max-width:90vw; box-shadow:0 8px 32px rgba(0,0,0,0.25);">
         <h2 class="card-title">Add New Bill</h2>
@@ -438,5 +520,35 @@
             </div>
         </form>
     </div>
+<script>
+// Fallback tab wiring in case module initialization fails
+(function(){
+    function doSwitch(tabId){
+        if (window.switchTab) { window.switchTab(tabId); return; }
+        // Minimal inline fallback
+        document.querySelectorAll('.tab').forEach(t => {
+            const isActive = t.getAttribute('data-tab') === tabId;
+            t.classList.toggle('active', isActive);
+            if (isActive) { t.setAttribute('aria-selected','true'); } else { t.setAttribute('aria-selected','false'); }
+        });
+        document.querySelectorAll('.tab-content').forEach(c => {
+            c.classList.toggle('active', c.id === tabId);
+        });
+    }
+    function handleActivate(el){ const id = el && el.getAttribute('data-tab'); if (id) doSwitch(id); }
+    const tabs = document.querySelector('.tabs');
+    if (tabs) {
+        tabs.addEventListener('click', (e)=>{
+            const el = e.target.closest('.tab');
+            if (el && tabs.contains(el)) { e.preventDefault(); handleActivate(el); }
+        });
+        tabs.addEventListener('keydown', (e)=>{
+            const el = e.target.closest('.tab');
+            if (!el) return;
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleActivate(el); }
+        });
+    }
+})();
+</script>
 </body>
 </html>
