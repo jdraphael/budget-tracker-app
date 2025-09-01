@@ -18,8 +18,8 @@
     --transition: all 0.25s cubic-bezier(.4,0,.2,1);
     --glass-bg: rgba(36, 39, 54, 0.7);
     --glass-blur: 12px;
-    --header-height: 0px;
-    --tabs-height: 0px;
+    --header-height: 70px; /* Fallback */
+    --tabs-height: 50px; /* Fallback */
 }
 
 * {
@@ -32,9 +32,6 @@ body {
     background: linear-gradient(135deg, #23232a 0%, #18181b 100%);
     color: var(--fg-200);
     font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
     letter-spacing: 0.01em;
 }
 
@@ -127,8 +124,7 @@ header {
     box-shadow: var(--shadow);
     overflow-x: auto;
     position: sticky;
-    /* will be set via JS --header-height */
-    top: var(--header-height, 0px);
+    top: var(--header-height); /* Stick below the header */
     z-index: 900;
 }
 
@@ -164,15 +160,12 @@ header {
 }
 
 main {
-    flex: 1;
-    padding: 2rem 2rem 1rem 2rem;
-    /* Allow the whole page to scroll so sticky elements (header, tabs, table thead)
-       are positioned relative to the viewport. */
-    overflow: visible;
+    padding: 0 2rem 1rem 2rem;
 }
 
 .tab-content {
     display: none;
+    padding-top: 1rem; /* Add space for the sticky tabs */
 }
 
 .tab-content.active {
@@ -264,8 +257,6 @@ main {
 }
 
 .table-container {
-    /* allow horizontal scrolling only; page will scroll vertically so the table header
-       can stick to the viewport when the user scrolls down */
     overflow-x: auto;
 }
 
@@ -275,17 +266,14 @@ table {
     margin-bottom: 2rem;
     background: var(--bg-700);
     border-radius: var(--border-radius);
-    overflow: hidden;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 thead {
     background: var(--bg-800);
     position: sticky;
-    /* stick directly below header + tabs using runtime-updated CSS vars */
-    top: calc(var(--header-height, 0px) + var(--tabs-height, 0px));
-    /* higher z-index so header stays above rows and other elements */
-    z-index: 1100;
+    top: var(--thead-top-offset);
+    z-index: 800; /* Lower than tabs */
 }
 
 th {

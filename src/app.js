@@ -124,17 +124,38 @@ document.addEventListener('DOMContentLoaded', async function() {
     checkUserLogin();
     // Load CSV data from assets so UI has data to render
     await loadAllData();
-    // Compute heights for sticky header and tabs so table thead can sit below them
+    
+    // Compute heights for sticky elements
     function updateStickyOffsets() {
         const header = document.querySelector('header');
         const tabs = document.querySelector('.tabs');
-        const headerHeight = header ? header.offsetHeight : 0;
-        const tabsHeight = tabs ? tabs.offsetHeight : 0;
-        document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
-        document.documentElement.style.setProperty('--tabs-height', `${tabsHeight}px`);
+        
+        if (header && tabs) {
+            const headerHeight = header.offsetHeight;
+            const tabsHeight = tabs.offsetHeight;
+            
+            const tabsStyle = window.getComputedStyle(tabs);
+            const tabsMarginTop = parseFloat(tabsStyle.marginTop);
+    
+            // The 'top' for .tabs should be the height of the header element itself.
+            document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+            
+            // The 'top' for thead needs to be the top of the tabs + height of the tabs.
+            const theadTopOffset = headerHeight + tabsHeight + tabsMarginTop;
+            document.documentElement.style.setProperty('--thead-top-offset', `${theadTopOffset}px`);
+        }
     }
+
+    // Run on initial load and after a short delay to ensure elements are rendered
     requestAnimationFrame(updateStickyOffsets);
+    setTimeout(updateStickyOffsets, 100); // Fallback for any rendering delays
+
+    // Re-run on resize and scroll to handle responsive changes or dynamic content
     window.addEventListener('resize', updateStickyOffsets);
+    window.addEventListener('scroll', () => {
+        requestAnimationFrame(updateStickyOffsets);
+    });
+
     // Initialize UI and tab navigation
     setupTabNavigation();
     window.onTabSwitch = function(tabId) {
@@ -655,26 +676,26 @@ addBillForm.addEventListener('submit', async function(e) {
 });
 document.getElementById('add-income-form').addEventListener('submit', async function(e) {
     e.preventDefault();
-    const source = document.getElementById('income-source').value.trim();
-    const amount = document.getElementById('income-amount').value;
-    const date = document.getElementById('income-date').value;
-    const recurrence = document.getElementById('income-recurrence').value;
-    const status = document.getElementById('income-status').value;
+    const incomeSource = document.getElementById('income-source').value.trim();
+    const incomeAmount = document.getElementById('income-amount').value;
+    const incomeDate = document.getElementById('income-date').value;
+    const incomeRecurrence = document.getElementById('income-recurrence').value;
+    const incomeStatus = document.getElementById('income-status').value;
     const editId = this.getAttribute('data-edit-id');
     if (editId) {
         const item = state.data.income.find(i => String(i.id) === String(editId));
         if (item) {
-            item.source = source;
-            item.amount = amount;
-            item.date = date;
-            item.recurrence = recurrence;
-            item.status = status;
+            item.source = incomeSource;
+            item.amount = incomeAmount;
+            item.date = incomeDate;
+            item.recurrence = incomeRecurrence;
+            item.status = incomeStatus;
         }
         this.removeAttribute('data-edit-id');
         alert('Income updated!');
     } else {
         const newId = Date.now();
-        state.data.income.push({ id: newId, source, amount, date, recurrence, status });
+        state.data.income.push({ id: newId, source: incomeSource, amount: incomeAmount, date: incomeDate, recurrence: incomeRecurrence, status: incomeStatus });
         alert('Income added!');
     }
     pushUndo('income');
@@ -684,55 +705,55 @@ document.getElementById('add-income-form').addEventListener('submit', async func
     renderIncomeList();
 });
 document.getElementById('add-transaction-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const date = document.getElementById('transaction-date').value;
-    const description = document.getElementById('transaction-description').value.trim();
-    const category = document.getElementById('transaction-category').value.trim();
-    const amount = document.getElementById('transaction-amount').value;
-    const status = document.getElementById('transaction-status').value;
-    const editId = this.getAttribute('data-edit-id');
-    if (editId) {
-        const item = state.data.transactions.find(i => String(i.id) === String(editId));
-        if (item) {
-            item.date = date;
-            item.description = description;
-            item.category = category;
-            item.amount = amount;
-            item.status = status;
+        e.preventDefault();
+        const transDate = document.getElementById('transaction-date').value;
+        const transDesc = document.getElementById('transaction-description').value.trim();
+        const transCat = document.getElementById('transaction-category').value.trim();
+        const transAmount = document.getElementById('transaction-amount').value;
+        const transStatus = document.getElementById('transaction-status').value;
+        const editId = this.getAttribute('data-edit-id');
+        if (editId) {
+            const item = state.data.transactions.find(i => String(i.id) === String(editId));
+            if (item) {
+                item.date = transDate;
+                item.description = transDesc;
+                item.category = transCat;
+                item.amount = transAmount;
+                item.status = transStatus;
+            }
+            this.removeAttribute('data-edit-id');
+            alert('Transaction updated!');
+        } else {
+            const newId = Date.now();
+            state.data.transactions.push({ id: newId, date: transDate, description: transDesc, category: transCat, amount: transAmount, status: transStatus });
+            alert('Transaction added!');
         }
-        this.removeAttribute('data-edit-id');
-        alert('Transaction updated!');
-    } else {
-        const newId = Date.now();
-        state.data.transactions.push({ id: newId, date, description, category, amount, status });
-        alert('Transaction added!');
-    }
-    pushUndo('transactions');
-    await saveTransactionsToCSV();
-    document.getElementById('add-transaction-modal').style.display = 'none';
-    this.reset();
-    renderTransactionsList();
-});
+        pushUndo('transactions');
+        await saveTransactionsToCSV();
+        document.getElementById('add-transaction-modal').style.display = 'none';
+        this.reset();
+        renderTransactionsList();
+    });
 document.getElementById('add-budget-form').addEventListener('submit', async function(e) {
     e.preventDefault();
-    const name = document.getElementById('budget-name').value.trim();
-    const amount = document.getElementById('budget-amount').value;
-    const period = document.getElementById('budget-period').value.trim();
-    const utilization = document.getElementById('budget-utilization').value;
+    const budgetName = document.getElementById('budget-name').value.trim();
+    const budgetAmount = document.getElementById('budget-amount').value;
+    const budgetPeriod = document.getElementById('budget-period').value.trim();
+    const budgetUtilization = document.getElementById('budget-utilization').value;
     const editId = this.getAttribute('data-edit-id');
     if (editId) {
         const item = state.data.budgets.find(i => String(i.id) === String(editId));
         if (item) {
-            item.name = name;
-            item.amount = amount;
-            item.period = period;
-            item.utilization = utilization;
+            item.name = budgetName;
+            item.amount = budgetAmount;
+            item.period = budgetPeriod;
+            item.utilization = budgetUtilization;
         }
         this.removeAttribute('data-edit-id');
         alert('Budget updated!');
     } else {
         const newId = Date.now();
-        state.data.budgets.push({ id: newId, name, amount, period, utilization });
+        state.data.budgets.push({ id: newId, name: budgetName, amount: budgetAmount, period: budgetPeriod, utilization: budgetUtilization });
         alert('Budget added!');
     }
     pushUndo('budgets');
@@ -743,20 +764,20 @@ document.getElementById('add-budget-form').addEventListener('submit', async func
 });
 document.getElementById('add-category-form').addEventListener('submit', async function(e) {
     e.preventDefault();
-    const category = document.getElementById('category-name').value.trim();
-    const subcategory = document.getElementById('subcategory-name').value.trim();
+    const catName = document.getElementById('category-name').value.trim();
+    const subcatName = document.getElementById('subcategory-name').value.trim();
     const editId = this.getAttribute('data-edit-id');
     if (editId) {
         const item = state.data.categories.find(i => String(i.id) === String(editId));
         if (item) {
-            item.category = category;
-            item.subcategory = subcategory;
+            item.category = catName;
+            item.subcategory = subcatName;
         }
         this.removeAttribute('data-edit-id');
         alert('Category updated!');
     } else {
         const newId = Date.now();
-        state.data.categories.push({ id: newId, category, subcategory });
+        state.data.categories.push({ id: newId, category: catName, subcategory: subcatName });
         alert('Category added!');
     }
     pushUndo('categories');
@@ -838,11 +859,19 @@ function renderCharts() {
 // Add this function to render bills in the Bills tab
 function renderBillsList(sortKey = 'name', sortDir = 'asc') {
     const billsSection = document.getElementById('bills');
-    // Clear existing content
-    billsSection.innerHTML = '';
-    let billsTable = document.createElement('div');
-    billsTable.className = 'table-container bills-table';
-    billsSection.appendChild(billsTable);
+    let billsTable = billsSection.querySelector('.table-container.bills-table');
+    if (!billsTable) {
+        billsTable = document.createElement('div');
+        billsTable.className = 'table-container bills-table';
+        // Insert it after the action-bar, or at the start if action-bar is not there
+        const actionBar = billsSection.querySelector('.action-bar');
+        if (actionBar) {
+            actionBar.insertAdjacentElement('afterend', billsTable);
+        } else {
+            billsSection.prepend(billsTable);
+        }
+    }
+    
     // Sort bills
     let bills = [...state.data.bills];
     bills.sort((a, b) => {
