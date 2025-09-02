@@ -1,13 +1,13 @@
 /* Bills Tab - Modern Dark Theme (modular) */
 .bills-tab {
-  background: var(--bg-900, #18181b);
+  background: var(--bg-900);
   color: var(--fg-200, #e5e7eb);
   font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
   padding: 1.5rem;
 }
 
 .bills-topbar {
-  display: flex;
+  display:flex;
   flex-wrap: wrap;
   gap: 1rem;
   align-items: center;
@@ -15,14 +15,14 @@
 }
 
 .bills-search {
-  flex: 2;
+  flex:1 1 60%;
   display: flex;
   gap: 0.75rem;
   align-items: center;
 }
 
 .bills-search input {
-  background: var(--bg-700, #23232a);
+  background:var(--bg-700);
   color: var(--fg-100, #fff);
   border: none;
   border-radius: 12px;
@@ -32,7 +32,7 @@
 }
 
 .pill-btn { /* lightweight pill */
-  background: var(--accent, #60a5fa);
+  background:var(--accent);
   color: white;
   border: none;
   border-radius: 999px;
@@ -83,3 +83,76 @@
   .bills-topbar, .bills-charts { flex-direction:column; }
   .bills-charts canvas { max-width:100%; }
 }
+/* Bills Tab - Polished, consistent with global tokens */
+.bills-tab {
+  background: var(--bg-900);
+  color: var(--fg-200);
+  padding: 1rem 1.25rem;
+}
+
+.bills-topbar {
+  display:flex;
+  gap:0.75rem;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:1rem;
+}
+
+.bills-search { flex:1 1 60%; display:flex; gap:0.75rem; align-items:center; }
+.bills-search input { background:var(--bg-700); color:var(--fg-100); border-radius:12px; padding:0.6rem 0.9rem; border:none; width:100%; }
+
+.pill-btn { background:var(--accent); color:var(--fg-100); border:none; border-radius:999px; padding:0.4rem 0.85rem; font-weight:700; }
+.pill-btn.pill-cancel { background:var(--bg-600); color:var(--fg-100); }
+
+.bills-view-toggle { display:flex; gap:0.5rem; }
+.bills-totals { display:flex; flex-direction:column; gap:0.2rem; align-items:flex-end; }
+
+.bills-progress-bar { width:200px; height:12px; background:var(--bg-700); border-radius:8px; overflow:hidden; }
+#bills-progress-inner { height:100%; background:linear-gradient(90deg,var(--positive),var(--accent)); width:0; }
+
+.bills-charts { display:flex; gap:1rem; margin-bottom:1rem; flex-wrap:wrap; }
+.bills-charts canvas { background:var(--bg-700); border-radius:12px; padding:0.5rem; max-width:380px; max-height:220px; }
+
+.bills-list-view { width:100%; }
+
+/* Table */
+.bills-table { width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; background:var(--bg-700); border-radius:12px; }
+.bills-table th, .bills-table td { padding:0.8rem 0.6rem; border-bottom:1px solid var(--border); line-height:1.35; }
+.bills-table th { background:var(--bg-800); position:sticky; top:0; z-index:3; font-weight:700; color:var(--fg-100); text-align:left; }
+.bills-table td { font-weight:500; color:var(--fg-200); }
+
+/* Bill name should ellipsize to prevent horizontal overflow */
+.bills-table td.bill-name { max-width:420px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Numeric column utility */
+.num { text-align:right; font-variant-numeric: tabular-nums; }
+
+.bills-table tr.overdue { border-left:4px solid var(--negative); background:rgba(239,68,68,0.06); }
+.badge { display:inline-block; padding:0.25rem 0.6rem; border-radius:999px; font-size:0.82rem; font-weight:700; }
+.badge-overdue { background:var(--negative); color:var(--fg-100); }
+.badge-paid { background:var(--positive); color:var(--fg-100); }
+.badge-duesoon { background:var(--warning); color:var(--bg-900); }
+.badge-upcoming { background:var(--accent); color:var(--fg-100); }
+.badge-owner { background:var(--accent-hover); color:var(--fg-100); }
+.badge-category { background:var(--bg-600); color:var(--accent); }
+
+.edit-btn, .delete-btn { background:transparent; color:var(--fg-100); border:1px solid var(--border); border-radius:8px; padding:0.35rem 0.6rem; cursor:pointer; }
+.edit-btn:hover { background:var(--accent-hover); color:var(--fg-100); }
+.delete-btn:hover { background:var(--negative); color:#fff; }
+
+/* Modal */
+body.modal-open { overflow: hidden; }
+.bills-modal { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--bg-700); color:var(--fg-100); border-radius:12px; box-shadow:var(--shadow); z-index:9999; width:min(760px,94vw); max-height:90vh; overflow:auto; padding:1rem 1.25rem; }
+.bills-modal.hidden { display:none; }
+.bills-modal label { display:block; margin-top:0.6rem; font-weight:700; }
+.bills-modal input, .bills-modal select { width:100%; padding:0.6rem; margin-top:0.3rem; border-radius:8px; background:var(--bg-600); border:none; color:var(--fg-100); }
+.modal-actions { display:flex; gap:0.6rem; justify-content:flex-end; margin-top:1rem; }
+
+/* Responsive tweaks */
+@media (max-width:900px) {
+  .bills-topbar, .bills-charts { flex-direction:column; }
+  .bills-charts canvas { max-width:100%; }
+}
+
+/* Bills polish */
+/* Keep selectors small and rely on global tokens for consistency */

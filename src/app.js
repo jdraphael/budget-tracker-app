@@ -899,7 +899,10 @@ function renderBillsList() {
     let tableDiv = section.querySelector('.table-container.bills-table');
     if (!tableDiv) {
         tableDiv = document.createElement('div');
-        tableDiv.className = 'table-container bills-table';
+    tableDiv.className = 'table-container bills-table';
+    // Bills polish: avoid horizontal scrolling and let table wrap where possible
+    tableDiv.style.overflowX = 'hidden';
+    tableDiv.style.width = '100%';
         section.appendChild(tableDiv);
     }
     let html = `<div class="table-toolbar">

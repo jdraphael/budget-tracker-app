@@ -86,8 +86,11 @@ export function initBillsModule(options = {}) {
   container.querySelector('#bills-list-view-btn').addEventListener('click', () => { container.querySelector('#bills-list-view').style.display=''; container.querySelector('#bills-calendar-view').style.display='none'; });
   container.querySelector('#bills-calendar-view-btn').addEventListener('click', () => { container.querySelector('#bills-list-view').style.display='none'; container.querySelector('#bills-calendar-view').style.display=''; });
 
-  // Modal cancel
-  container.querySelector('#bills-modal-cancel').addEventListener('click', () => container.querySelector('#bills-modal').classList.add('hidden'));
+  // Modal cancel — hide and remove body lock
+  container.querySelector('#bills-modal-cancel').addEventListener('click', () => {
+    container.querySelector('#bills-modal').classList.add('hidden');
+    document.body.classList.remove('modal-open');
+  });
 
   // Form submit
   container.querySelector('#bills-modal-form').addEventListener('submit', (e) => { e.preventDefault(); saveModal(); });
@@ -109,35 +112,42 @@ export function initBillsModule(options = {}) {
     bills.forEach(b => {
       const due = DateTime.fromISO(b.due);
       if (b.status === 'Paid') groups.Paid.push(b);
-      else if (due < now) groups.Overdue.push(b);
-      else if (due <= now.plus({ days:7 })) groups.DueSoon.push(b);
+      else if (due.isValid && due < now) groups.Overdue.push(b);
+      else if (due.isValid && due <= now.plus({ days:7 })) groups.DueSoon.push(b);
       else groups.Upcoming.push(b);
     });
     let html = '<table class="bills-table"><thead><tr><th>Bill Name</th><th>Owner</th><th>Category</th><th>Subcategory</th><th>Due Date</th><th>Projected</th><th>Actual</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
     ['Overdue','DueSoon','Upcoming','Paid'].forEach(section => {
       const rows = groups[section];
       if (!rows.length) return;
-      html += `<tr><td colspan="9" style="background:var(--bg-800);font-weight:700;color:var(--accent);">${section}</td></tr>`;
+      html += `<tr class="section-row"><td colspan="9" style="background:var(--bg-800);font-weight:700;color:var(--accent);">${section}</td></tr>`;
       rows.forEach(b => {
         const overdueClass = section === 'Overdue' ? 'overdue' : '';
         html += `<tr class="${overdueClass}" data-id="${b.id}">`;
-        html += `<td>${b.name} ${b.projected > ((b.history && b.history[b.history.length-2])||0) ? '<span class="badge badge-duesoon" title="Higher than previous month">↑</span>' : ''}</td>`;
-        html += `<td><span class="badge badge-owner">${b.owner}</span></td>`;
-        html += `<td><span class="badge badge-category">${b.category}</span></td>`;
-        html += `<td>${b.subcategory}</td>`;
-        html += `<td>${b.due}</td>`;
-        html += `<td>${formatUSD(b.projected)}</td>`;
-        html += `<td>${b.actual!=null?formatUSD(b.actual):'-'}</td>`;
-        html += `<td>${b.status}</td>`;
-        html += `<td><button class="edit-btn" data-id="${b.id}">Edit</button><button class="delete-btn" data-id="${b.id}">Delete</button></td>`;
+        // Bill name with ellipsis utility
+        html += `<td class="bill-name">${escapeHtml(b.name || '-')}${b.projected > ((b.history && b.history[b.history.length-2])||0) ? '<span class="badge badge-duesoon" title="Higher than previous month">↑</span>' : ''}</td>`;
+        html += `<td><span class="badge badge-owner">${escapeHtml(b.owner||'')}</span></td>`;
+        html += `<td><span class="badge badge-category">${escapeHtml(b.category||'')}</span></td>`;
+        html += `<td>${escapeHtml(b.subcategory||'')}</td>`;
+        html += `<td>${escapeHtml(b.due||'-')}</td>`;
+        html += `<td class="num">${formatUSD(b.projected)}</td>`;
+        html += `<td class="num">${b.actual!=null?formatUSD(b.actual):'-'}</td>`;
+        // Status badge mapping
+        const status = (b.status || 'Upcoming');
+        let statusBadge = `<span class="badge badge-upcoming">${escapeHtml(status)}</span>`;
+        if (/overdue/i.test(status)) statusBadge = `<span class="badge badge-overdue">${escapeHtml(status)}</span>`;
+        else if (/paid/i.test(status)) statusBadge = `<span class="badge badge-paid">${escapeHtml(status)}</span>`;
+        else if (/due/i.test(status)) statusBadge = `<span class="badge badge-duesoon">${escapeHtml(status)}</span>`;
+        html += `<td>${statusBadge}</td>`;
+        html += `<td><button class="edit-btn" data-id="${b.id}" aria-label="Edit ${escapeHtml(b.name)}">✏️ Edit</button> <button class="delete-btn" data-id="${b.id}" aria-label="Delete ${escapeHtml(b.name)}">🗑️ Delete</button></td>`;
         html += `</tr>`;
       });
     });
     html += '</tbody></table>';
     containerEl.innerHTML = html;
     // Wire edit/delete
-    containerEl.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => openModal(getBillById(e.target.dataset.id))));
-    containerEl.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => { deleteBill(e.target.dataset.id); }));
+    containerEl.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => openModal(getBillById(e.currentTarget.dataset.id))));
+    containerEl.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => { deleteBill(e.currentTarget.dataset.id); }));
   }
 
   function renderTotals(bills) {
@@ -152,15 +162,19 @@ export function initBillsModule(options = {}) {
 
   function renderCharts(bills) {
     try {
+      // Destroy previous charts if present (prevents stacking on re-render)
+      try { if (container._billsBarChart) { container._billsBarChart.destroy(); delete container._billsBarChart; } } catch(e){}
+      try { if (container._billsPieChart) { container._billsPieChart.destroy(); delete container._billsPieChart; } } catch(e){}
       const barCtx = container.querySelector('#bills-bar-chart').getContext('2d');
       const pieCtx = container.querySelector('#bills-pie-chart').getContext('2d');
       // simple bar: due date vs projected
-      const labels = bills.map(b => b.due);
-      const data = bills.map(b => b.projected);
-      new Chart(barCtx, { type: 'bar', data:{ labels, datasets:[{ label:'Projected', data, backgroundColor:'#60a5fa' }] }, options:{ responsive:true } });
+      const labels = bills.map(b => b.due || '');
+      const data = bills.map(b => Number(b.projected) || 0);
+      container._billsBarChart = new Chart(barCtx, { type: 'bar', data:{ labels, datasets:[{ label:'Projected', data, backgroundColor:getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#60a5fa' }] }, options:{ responsive:true, plugins:{ legend:{ display:false } } } });
       const catCount = {};
       bills.forEach(b => catCount[b.category] = (catCount[b.category]||0)+1);
-      new Chart(pieCtx, { type:'pie', data:{ labels:Object.keys(catCount), datasets:[{ data:Object.values(catCount), backgroundColor:['#60a5fa','#22c55e','#fbbf24','#ef4444','#2563eb'] }] }, options:{ responsive:true } });
+      const palette = [getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#60a5fa', getComputedStyle(document.documentElement).getPropertyValue('--positive') || '#22c55e', getComputedStyle(document.documentElement).getPropertyValue('--warning') || '#fbbf24', getComputedStyle(document.documentElement).getPropertyValue('--negative') || '#ef4444', getComputedStyle(document.documentElement).getPropertyValue('--accent-hover') || '#2563eb'];
+      container._billsPieChart = new Chart(pieCtx, { type:'pie', data:{ labels:Object.keys(catCount), datasets:[{ data:Object.values(catCount), backgroundColor: Object.keys(catCount).map((k,i)=> palette[i % palette.length]) }] }, options:{ responsive:true, plugins:{ legend:{ position:'right' } } } });
     } catch (e) { console.warn('Charts failed', e); }
   }
 
@@ -182,7 +196,9 @@ export function initBillsModule(options = {}) {
   function getBillById(id) { return (state.data && state.data.bills) ? state.data.bills.find(b => String(b.id) === String(id)) : null; }
 
   function openModal(bill=null) {
-    const modal = container.querySelector('#bills-modal'); modal.classList.remove('hidden');
+  const modal = container.querySelector('#bills-modal'); modal.classList.remove('hidden');
+  // Prevent page from scrolling behind modal
+  document.body.classList.add('modal-open');
     container.querySelector('#bills-modal-title').textContent = bill ? 'Edit Bill' : 'Add Bill';
     container.querySelector('#modal-bill-name').value = bill ? bill.name : '';
     container.querySelector('#modal-bill-owner').value = bill ? bill.owner : (state.uiState && state.uiState.owners ? state.uiState.owners[0] : 'You');
@@ -212,7 +228,9 @@ export function initBillsModule(options = {}) {
       if (!state.data) state.data = {}; if (!state.data.bills) state.data.bills = [];
       state.data.bills.push(newB);
     }
-    container.querySelector('#bills-modal').classList.add('hidden'); renderAll();
+  container.querySelector('#bills-modal').classList.add('hidden');
+  document.body.classList.remove('modal-open');
+  renderAll();
   }
 
   function deleteBill(id) { if (!confirm('Delete?')) return; state.data.bills = state.data.bills.filter(b=>String(b.id)!==String(id)); renderAll(); }
