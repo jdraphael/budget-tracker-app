@@ -24,7 +24,7 @@
         </div>
         <div class="month-picker">
             <label for="month-select">Viewing:</label>
-            <input type="month" id="month-select" value="2025-08">
+            <input type="month" id="month-select" value="2025-09">
         </div>
         <div class="header-actions">
             <button id="undo-btn" class="btn btn-sm btn-outline" title="Undo last action">
@@ -294,7 +294,9 @@
 1,Salary,3500.00,2025-01-01,Monthly,Received
 2,Freelance,500.00,2025-01-15,Monthly,Received
 3,Investment Dividends,200.00,2025-01-01,Monthly,Received
-4,Bonus,1000.00,2025-06-01,Annually,Received</script>
+4,Bonus,1000.00,2025-06-01,Annually,Received
+5,Salary,3600.00,2025-09-01,Monthly,Received
+6,Freelance,650.00,2025-09-15,Monthly,Pending</script>
 
     <script type="text/csv" id="seed-transactions-csv">id,date,description,category,amount,status
 1,2025-08-01,Rent Payment,Housing,-1200.00,Paid
@@ -314,7 +316,12 @@
 15,2025-08-10,Dining Out,Food,-75.00,Paid
 16,2025-08-12,Gas Fill-up,Transportation,-45.00,Paid
 17,2025-08-20,Clothing Purchase,Personal,-120.00,Paid
-18,2025-08-25,Coffee Shop,Food,-10.00,Paid</script>
+18,2025-08-25,Coffee Shop,Food,-10.00,Paid
+19,2025-09-01,Rent Payment,Housing,-1200.00,Paid
+20,2025-09-02,Electricity Bill,Utilities,-155.00,Pending
+21,2025-09-03,Internet Bill,Utilities,-80.00,Pending
+22,2025-09-05,Salary Deposit,Income,3600.00,Received
+23,2025-09-06,Grocery Shopping,Food,-162.40,Paid</script>
 
     <script type="text/csv" id="seed-categories-csv">id,category,subcategory
 1,Housing,Rent/Mortgage
@@ -549,6 +556,16 @@
         });
     }
 })();
+// Ensure month input reflects app state when modules load successfully
+document.addEventListener('DOMContentLoaded', function(){
+    try {
+        if (window.luxon) {
+            const ym = luxon.DateTime.now().toFormat('yyyy-MM');
+            const inp = document.getElementById('month-select');
+            if (inp && (!inp.value || !/^\d{4}-\d{2}$/.test(inp.value))) inp.value = ym;
+        }
+    } catch {}
+});
 </script>
 </body>
 </html>

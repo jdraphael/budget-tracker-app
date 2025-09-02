@@ -56,7 +56,10 @@ const state = {
     },
     uiState: {
         searchQuery: '',
-        folderHandle: null
+    folderHandle: null,
+    // Per-tab filters and grid-edit mode
+    filters: {},
+    gridEditTabs: {}
     }
 };
 // Keep active Chart instances so we can destroy them before reusing canvases
@@ -183,6 +186,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Initialize UI and tab navigation
     setupTabNavigation();
+    // Wire interactive controls
+    try { setupEventListeners(); } catch {}
     window.onTabSwitch = function(tabId) {
         if (tabId === 'dashboard') renderCharts();
         if (tabId === 'bills') renderBillsList();
@@ -205,10 +210,16 @@ document.addEventListener('DOMContentLoaded', async function() {
 function renderTable(tab, columns, data, actions, sortKeys = [{key:columns[0],dir:'asc'}], filter = {}, search = '') {
     addBulkActionsUI(tab, columns);
     renderAnalytics(tab, columns, data);
-    let filtered = [...data];
+    // 1) Only current month data
+    let filtered = filterToCurrentMonth(tab, data);
+    // 2) Apply saved per-column filters
+    const savedFilters = state.uiState.filters[tab] || {};
+    filter = { ...savedFilters, ...filter };
     Object.keys(filter).forEach(key => {
-        if (filter[key]) {
-            filtered = filtered.filter(item => String(item[key]) === String(filter[key]));
+        const val = (filter[key] || '').trim();
+        if (val) {
+            const v = val.toLowerCase();
+            filtered = filtered.filter(item => String(item[key] ?? '').toLowerCase().includes(v));
         }
     });
     if (search) {
@@ -222,9 +233,24 @@ function renderTable(tab, columns, data, actions, sortKeys = [{key:columns[0],di
         tableDiv.className = `table-container ${tab}-table`;
         section.appendChild(tableDiv);
     }
-    let html = `<table><thead><tr><th><input type='checkbox' class='select-all'></th>`;
+    const inGridEdit = !!state.uiState.gridEditTabs[tab];
+    let html = `<div class="table-toolbar">
+        <button class="btn btn-sm ${inGridEdit ? '' : 'btn-outline'} toggle-grid">${inGridEdit ? 'Done' : 'Edit Grid'}</button>
+        <button class="btn btn-sm btn-outline clear-filters">Clear Filters</button>
+    </div>`;
+    html += `<table><thead><tr><th><input type='checkbox' class='select-all'></th>`;
     columns.forEach(col => {
-        html += `<th data-sort="${col}">${col.charAt(0).toUpperCase() + col.slice(1)}</th>`;
+        const label = col.charAt(0).toUpperCase() + col.slice(1);
+        const currentFilterVal = filter[col] || '';
+        html += `<th data-sort="${col}">
+            <div class="th-inner">
+              <span class="th-label">${label}</span>
+              <span class="th-sort" title="Sort">⇅</span>
+              <div class="th-filter">
+                <input class="th-filter-input" data-col="${col}" type="text" placeholder="Filter" value="${currentFilterVal}">
+              </div>
+            </div>
+        </th>`;
     });
     html += `<th>Actions</th></tr></thead><tbody>`;
     if (sorted.length === 0) {
@@ -233,7 +259,13 @@ function renderTable(tab, columns, data, actions, sortKeys = [{key:columns[0],di
         for (const item of sorted) {
             html += `<tr data-id="${item.id}"><td><input type='checkbox' class='row-checkbox'></td>`;
             columns.forEach(col => {
-                html += `<td>${col === 'amount' ? formatCurrency(item[col]) : (item[col] || '-')}</td>`;
+                const raw = item[col] ?? '';
+                const display = col === 'amount' && raw !== '' ? formatCurrency(Number(raw)) : raw || '';
+                if (inGridEdit) {
+                    html += `<td data-col="${col}"><div class="cell-edit" contenteditable="true" spellcheck="false">${escapeHtml(String(raw))}</div></td>`;
+                } else {
+                    html += `<td>${display || '-'}</td>`;
+                }
             });
             html += `<td>`;
             actions.forEach(act => {
@@ -244,6 +276,27 @@ function renderTable(tab, columns, data, actions, sortKeys = [{key:columns[0],di
     }
     html += `</tbody></table>`;
     tableDiv.innerHTML = html;
+    // Toolbar handlers
+    const toggleBtn = tableDiv.querySelector('.toggle-grid');
+    if (toggleBtn) {
+        toggleBtn.onclick = () => {
+            if (state.uiState.gridEditTabs[tab]) {
+                // Save edits before exit
+                persistGridEdits(tab, columns, data, tableDiv);
+                delete state.uiState.gridEditTabs[tab];
+            } else {
+                state.uiState.gridEditTabs[tab] = true;
+            }
+            renderTable(tab, columns, data, actions, sortKeys, filter, search);
+        };
+    }
+    const clearFiltersBtn = tableDiv.querySelector('.clear-filters');
+    if (clearFiltersBtn) {
+        clearFiltersBtn.onclick = () => {
+            state.uiState.filters[tab] = {};
+            renderTable(tab, columns, data, actions, sortKeys, {}, '');
+        };
+    }
     // Select all
     tableDiv.querySelector('.select-all').onchange = function() {
         tableDiv.querySelectorAll('.row-checkbox').forEach(cb => { cb.checked = this.checked; });
@@ -252,16 +305,27 @@ function renderTable(tab, columns, data, actions, sortKeys = [{key:columns[0],di
     let currentSortKeys = [...sortKeys];
     tableDiv.querySelectorAll('th[data-sort]').forEach(th => {
         th.style.cursor = 'pointer';
-        th.onclick = () => {
+        th.addEventListener('click', (e) => {
+            // Ignore clicks inside filter input
+            if (e.target && (e.target.closest('.th-filter') || e.target.classList.contains('th-filter-input'))) return;
             const col = th.getAttribute('data-sort');
             let found = currentSortKeys.find(s => s.key === col);
             if (found) {
                 found.dir = found.dir === 'asc' ? 'desc' : 'asc';
             } else {
-                currentSortKeys.push({key:col,dir:'asc'});
+                currentSortKeys = [{ key: col, dir: 'asc' }];
             }
             renderTable(tab, columns, data, actions, currentSortKeys, filter, search);
-        };
+        });
+    });
+    // Column filters
+    tableDiv.querySelectorAll('.th-filter-input').forEach(inp => {
+        inp.addEventListener('input', (e) => {
+            const col = inp.getAttribute('data-col');
+            state.uiState.filters[tab] = state.uiState.filters[tab] || {};
+            state.uiState.filters[tab][col] = inp.value;
+            renderTable(tab, columns, data, actions, sortKeys, state.uiState.filters[tab], search);
+        });
     });
     // Edit/Delete
     tableDiv.querySelectorAll('.edit-row').forEach(btn => {
@@ -276,6 +340,16 @@ function renderTable(tab, columns, data, actions, sortKeys = [{key:columns[0],di
             deleteRow(tab, id);
         };
     });
+    // Grid edit: handle Enter to save cell and move down, Esc to revert
+    if (inGridEdit) {
+        tableDiv.querySelectorAll('.cell-edit').forEach(cell => {
+            cell.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); handleCellCommit(cell, true); }
+                if (e.key === 'Escape') { e.preventDefault(); handleCellRevert(cell); }
+            });
+            cell.addEventListener('blur', () => handleCellCommit(cell, false));
+        });
+    }
 }
 
 // Multi-column sort
@@ -292,6 +366,92 @@ function multiColumnSort(data, sortKeys) {
         }
         return 0;
     });
+}
+
+// Helpers
+function filterToCurrentMonth(tab, data) {
+    const ym = state.currentMonth; // 'yyyy-MM'
+    const monthStart = DateTime.fromFormat(ym + '-01', 'yyyy-MM-dd');
+    const monthEnd = monthStart.endOf('month');
+    if (tab === 'bills') {
+        return data.filter(item => {
+            const start = item.start_date ? DateTime.fromISO(String(item.start_date)) : null;
+            const end = item.end_date ? DateTime.fromISO(String(item.end_date)) : null;
+            if (!start || !start.isValid) return false;
+            const startsBeforeOrInMonth = start <= monthEnd;
+            const endsAfterOrOpen = !end || (end.isValid && end >= monthStart);
+            const notInactive = String(item.status || '').toLowerCase() !== 'inactive';
+            return startsBeforeOrInMonth && endsAfterOrOpen && notInactive;
+        });
+    }
+    if (tab === 'income' || tab === 'transactions') {
+        return data.filter(item => String(item.date || '').startsWith(ym));
+    }
+    // Budgets and categories have no date column; show all
+    return data;
+}
+
+function persistGridEdits(tab, columns, data, tableDiv) {
+    const rows = Array.from(tableDiv.querySelectorAll('tbody tr'));
+    const map = new Map(data.map(d => [String(d.id), d]));
+    for (const tr of rows) {
+        const id = tr.getAttribute('data-id');
+        const model = map.get(String(id));
+        if (!model) continue;
+        const tds = Array.from(tr.querySelectorAll('td'));
+        // Skip first cell (checkbox)
+        for (let i = 1; i <= columns.length; i++) {
+            const col = columns[i - 1];
+            const td = tds[i];
+            if (!td) continue;
+            const editor = td.querySelector('.cell-edit');
+            if (!editor) continue;
+            const newVal = editor.innerText.trim();
+            // Basic typing: numeric for amount, leave others as string
+            if (col === 'amount') {
+                model[col] = newVal === '' ? '' : Number(newVal);
+            } else {
+                model[col] = newVal;
+            }
+        }
+    }
+    // Persist per tab
+    if (tab === 'bills' && typeof saveBillsToCSV === 'function') saveBillsToCSV();
+    if (tab === 'income' && typeof saveIncomeToCSV === 'function') saveIncomeToCSV();
+    if (tab === 'transactions' && typeof saveTransactionsToCSV === 'function') saveTransactionsToCSV();
+    if (tab === 'budgets' && typeof saveBudgetsToCSV === 'function') saveBudgetsToCSV();
+    if (tab === 'categories' && typeof saveCategoriesToCSV === 'function') saveCategoriesToCSV();
+}
+
+function handleCellCommit(cell, moveDown) {
+    const tr = cell.closest('tr');
+    const table = cell.closest('table');
+    if (!tr || !table) return;
+    // mark dirty visual could be added
+    if (moveDown) {
+        // Move focus to the editor in next row same column
+        const td = cell.closest('td');
+        const colIndex = Array.from(td.parentElement.children).indexOf(td);
+        const next = tr.nextElementSibling;
+        if (next) {
+            const target = next.children[colIndex];
+            const ed = target && target.querySelector('.cell-edit');
+            if (ed) {
+                setTimeout(() => {
+                    ed.focus();
+                    document.getSelection()?.selectAllChildren(ed);
+                }, 0);
+            }
+        }
+    }
+}
+
+function handleCellRevert(cell) {
+    // No-op for now: could store original value in dataset
+}
+
+function escapeHtml(str) {
+    return str.replace(/[&<>"]+/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]));
 }
 
 // Bulk actions
@@ -391,6 +551,13 @@ function setupEventListeners() {
     document.getElementById('month-select').addEventListener('change', function() {
         state.currentMonth = this.value;
         saveUIPreferences();
+    // Re-render current tab's table with new month filter
+    const tab = state.activeTab;
+    if (tab === 'bills') renderBillsList();
+    if (tab === 'income') renderIncomeList();
+    if (tab === 'transactions') renderTransactionsList();
+    if (tab === 'budgets') renderBudgetsList();
+    if (tab === 'categories') renderCategoriesList();
     });
     document.getElementById('global-search').addEventListener('input', function() {
         state.uiState.searchQuery = this.value;
@@ -399,187 +566,6 @@ function setupEventListeners() {
     document.getElementById('sync-btn').addEventListener('click', rebuildCurrentMonth);
     document.getElementById('select-folder-btn').addEventListener('click', selectDataFolder);
     document.getElementById('backup-btn').addEventListener('click', createBackup);
-    // Add Bill modal event listeners
-    document.querySelector('#bills .btn').addEventListener('click', function() {
-        document.getElementById('add-bill-modal').style.display = 'block';
-    });
-    document.getElementById('cancel-add-bill').addEventListener('click', function() {
-        document.getElementById('add-bill-modal').style.display = 'none';
-    });
-    document.getElementById('add-bill-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const name = document.getElementById('bill-name').value.trim();
-        const amount = document.getElementById('bill-amount').value;
-        const recurrence = document.getElementById('bill-recurrence').value;
-        const start_date = document.getElementById('bill-start').value;
-        const end_date = document.getElementById('bill-end').value;
-        const status = document.getElementById('bill-status').value;
-    const editId = this.getAttribute('data-edit-id');
-        if (editId) {
-            // Edit existing bill
-            const bill = state.data.bills.find(b => String(b.id) === String(editId));
-            if (bill) {
-                bill.name = name;
-                bill.amount = amount;
-                bill.recurrence = recurrence;
-                bill.start_date = start_date;
-                bill.end_date = end_date;
-                bill.status = status;
-            }
-            this.removeAttribute('data-edit-id');
-            alert('Bill updated!');
-        } else {
-            // Add new bill
-            const newId = Date.now();
-            const newBill = { id: newId, name, amount, recurrence, start_date, end_date, status };
-            state.data.bills.push(newBill);
-            alert('Bill added!');
-        }
-        await saveBillsToCSV();
-        document.getElementById('add-bill-modal').style.display = 'none';
-        this.reset();
-        renderBillsList();
-    });
-    document.querySelector('#income .btn').addEventListener('click', function() {
-        document.getElementById('add-income-modal').style.display = 'block';
-    });
-    document.getElementById('cancel-add-income').addEventListener('click', function() {
-        document.getElementById('add-income-modal').style.display = 'none';
-        document.getElementById('add-income-form').reset();
-        document.getElementById('add-income-form').removeAttribute('data-edit-id');
-    });
-    document.getElementById('add-income-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const source = document.getElementById('income-source').value.trim();
-        const amount = document.getElementById('income-amount').value;
-        const date = document.getElementById('income-date').value;
-        const recurrence = document.getElementById('income-recurrence').value;
-        const status = document.getElementById('income-status').value;
-        const editId = this.getAttribute('data-edit-id');
-        if (editId) {
-            const item = state.data.income.find(i => String(i.id) === String(editId));
-            if (item) {
-                item.source = source;
-                item.amount = amount;
-                item.date = date;
-                item.recurrence = recurrence;
-                item.status = status;
-            }
-            this.removeAttribute('data-edit-id');
-            alert('Income updated!');
-        } else {
-            const newId = Date.now();
-            state.data.income.push({ id: newId, source, amount, date, recurrence, status });
-            alert('Income added!');
-        }
-        await saveIncomeToCSV();
-        document.getElementById('add-income-modal').style.display = 'none';
-        this.reset();
-        renderIncomeList();
-    });
-    document.querySelector('#transactions .btn').addEventListener('click', function() {
-        document.getElementById('add-transaction-modal').style.display = 'block';
-    });
-    document.getElementById('cancel-add-transaction').addEventListener('click', function() {
-        document.getElementById('add-transaction-modal').style.display = 'none';
-        document.getElementById('add-transaction-form').reset();
-        document.getElementById('add-transaction-form').removeAttribute('data-edit-id');
-    });
-    document.getElementById('add-transaction-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const date = document.getElementById('transaction-date').value;
-        const description = document.getElementById('transaction-description').value.trim();
-        const category = document.getElementById('transaction-category').value.trim();
-        const amount = document.getElementById('transaction-amount').value;
-        const status = document.getElementById('transaction-status').value;
-        const editId = this.getAttribute('data-edit-id');
-        if (editId) {
-            const item = state.data.transactions.find(i => String(i.id) === String(editId));
-            if (item) {
-                item.date = date;
-                item.description = description;
-                item.category = category;
-                item.amount = amount;
-                item.status = status;
-            }
-            this.removeAttribute('data-edit-id');
-            alert('Transaction updated!');
-        } else {
-            const newId = Date.now();
-            state.data.transactions.push({ id: newId, date, description, category, amount, status });
-            alert('Transaction added!');
-        }
-        await saveTransactionsToCSV();
-        document.getElementById('add-transaction-modal').style.display = 'none';
-        this.reset();
-        renderTransactionsList();
-    });
-    document.querySelector('#budgets .btn').addEventListener('click', function() {
-        document.getElementById('add-budget-modal').style.display = 'block';
-    });
-    document.getElementById('cancel-add-budget').addEventListener('click', function() {
-        document.getElementById('add-budget-modal').style.display = 'none';
-        document.getElementById('add-budget-form').reset();
-        document.getElementById('add-budget-form').removeAttribute('data-edit-id');
-    });
-    document.getElementById('add-budget-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const name = document.getElementById('budget-name').value.trim();
-        const amount = document.getElementById('budget-amount').value;
-        const period = document.getElementById('budget-period').value.trim();
-        const utilization = document.getElementById('budget-utilization').value;
-        const editId = this.getAttribute('data-edit-id');
-        if (editId) {
-            const item = state.data.budgets.find(i => String(i.id) === String(editId));
-            if (item) {
-                item.name = name;
-                item.amount = amount;
-                item.period = period;
-                item.utilization = utilization;
-            }
-            this.removeAttribute('data-edit-id');
-            alert('Budget updated!');
-        } else {
-            const newId = Date.now();
-            state.data.budgets.push({ id: newId, name, amount, period, utilization });
-            alert('Budget added!');
-        }
-        await saveBudgetsToCSV();
-        document.getElementById('add-budget-modal').style.display = 'none';
-        this.reset();
-        renderBudgetsList();
-    });
-    document.querySelector('#categories .btn').addEventListener('click', function() {
-        document.getElementById('add-category-modal').style.display = 'block';
-    });
-    document.getElementById('cancel-add-category').addEventListener('click', function() {
-        document.getElementById('add-category-modal').style.display = 'none';
-        document.getElementById('add-category-form').reset();
-        document.getElementById('add-category-form').removeAttribute('data-edit-id');
-    });
-    document.getElementById('add-category-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const category = document.getElementById('category-name').value.trim();
-        const subcategory = document.getElementById('subcategory-name').value.trim();
-        const editId = this.getAttribute('data-edit-id');
-        if (editId) {
-            const item = state.data.categories.find(i => String(i.id) === String(editId));
-            if (item) {
-                item.category = category;
-                item.subcategory = subcategory;
-            }
-            this.removeAttribute('data-edit-id');
-            alert('Category updated!');
-        } else {
-            const newId = Date.now();
-            state.data.categories.push({ id: newId, category, subcategory });
-            alert('Category added!');
-        }
-        await saveCategoriesToCSV();
-        document.getElementById('add-category-modal').style.display = 'none';
-        this.reset();
-        renderCategoriesList();
-    });
 }
 
 // Add import buttons to filter bars
@@ -893,108 +879,108 @@ function renderCharts() {
 }
 
 // Add this function to render bills in the Bills tab
-function renderBillsList(sortKey = 'name', sortDir = 'asc') {
-    const billsSection = document.getElementById('bills');
-    
-    console.log("Creating initial bills table");
-    
-    // Clean up any existing content first except for the action bar
-    // Find all child elements that are not the action-bar and remove them
-    Array.from(billsSection.children).forEach(child => {
-        if (!child.classList.contains('action-bar')) {
-            child.remove();
-        }
+function renderBillsList() {
+    addFilterSearchUI('bills', ['name','amount','recurrence','start_date','end_date','status']);
+    renderAnalytics('bills', ['name','amount','recurrence','start_date','end_date','status'], state.data.bills);
+    renderTabCharts('bills', ['name','amount','recurrence','start_date','end_date','status'], state.data.bills);
+    // Custom next-gen bills table rendering
+    const tab = 'bills';
+    const columns = ['name','amount','recurrence','start_date','end_date','status'];
+    const data = filterToCurrentMonth(tab, state.data.bills);
+    const section = document.getElementById(tab);
+    let tableDiv = section.querySelector('.table-container.bills-table');
+    if (!tableDiv) {
+        tableDiv = document.createElement('div');
+        tableDiv.className = 'table-container bills-table';
+        section.appendChild(tableDiv);
+    }
+    let html = `<div class="table-toolbar">
+        <button class="btn btn-sm btn-outline toggle-grid">Edit Grid</button>
+        <button class="btn btn-sm btn-outline clear-filters">Clear Filters</button>
+    </div>`;
+    html += `<table><thead><tr>`;
+    columns.forEach(col => {
+        const label = col.charAt(0).toUpperCase() + col.slice(1);
+        html += `<th>${label}</th>`;
     });
-    
-    // Create a fresh table container
-    const billsTable = document.createElement('div');
-    billsTable.className = 'table-container bills-table';
-    billsSection.appendChild(billsTable);
-    
-    // Sort bills
-    let bills = [...state.data.bills];
-    bills.sort((a, b) => {
-        if (sortKey === 'amount') {
-            return sortDir === 'asc' ? a.amount - b.amount : b.amount - a.amount;
-        } else {
-            return sortDir === 'asc' ? String(a[sortKey]).localeCompare(String(b[sortKey])) : String(b[sortKey]).localeCompare(String(a[sortKey]));
-        }
-    });
-    
-    // Use simple innerHTML approach for consistency across environments
-    let html = `<table><thead><tr>
-        <th data-sort="name">Name</th>
-        <th data-sort="amount">Amount</th>
-        <th data-sort="recurrence">Recurrence</th>
-        <th data-sort="start_date">Start</th>
-        <th data-sort="end_date">End</th>
-        <th data-sort="status">Status</th>
-        <th>Actions</th>
-    </tr></thead><tbody>`;
-    
-    if (bills.length === 0) {
-        html += `<tr><td colspan='7' style='text-align:center;color:var(--fg-300);'>No bills added yet.</td></tr>`;
+    html += `<th>Quick Actions</th></tr></thead><tbody>`;
+    if (data.length === 0) {
+        html += `<tr><td colspan='${columns.length + 1}' style='text-align:center;color:var(--fg-300);'>No bills added yet.</td></tr>`;
     } else {
-        for (const bill of bills) {
-            html += `<tr data-id="${bill.id}">
-                <td>${bill.name || '-'}</td>
-                <td>${formatCurrency(Number(bill.amount) || 0)}</td>
-                <td>${bill.recurrence || '-'}</td>
-                <td>${bill.start_date || '-'}</td>
-                <td>${bill.end_date || '-'}</td>
-                <td>${bill.status || 'Unknown'}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline edit-bill">Edit</button>
-                    <button class="btn btn-sm btn-outline delete-bill">Delete</button>
-                </td>
-            </tr>`;
+        for (const bill of data) {
+            // Overdue logic
+            let isOverdue = false;
+            if (bill.status && String(bill.status).toLowerCase() === 'active') {
+                const today = DateTime.now();
+                const dueDate = bill.end_date ? DateTime.fromISO(String(bill.end_date)) : null;
+                if (dueDate && dueDate.isValid && dueDate < today) isOverdue = true;
+            }
+            html += `<tr data-id="${bill.id}"${isOverdue ? ' class="overdue"' : ''}>`;
+            html += `<td>${bill.name || '-'}${bill.recurrence && bill.recurrence !== 'Once' ? `<span class="badge-recurring">${bill.recurrence}</span>` : ''}</td>`;
+            html += `<td>${formatCurrency(Number(bill.amount) || 0)}</td>`;
+            html += `<td>${bill.recurrence || '-'}</td>`;
+            html += `<td>${bill.start_date || '-'}</td>`;
+            html += `<td>${bill.end_date || '-'}</td>`;
+            html += `<td>${bill.status || 'Unknown'}</td>`;
+            html += `<td><div class="quick-actions">
+                <button class="quick-btn paid" title="Mark Paid">Paid</button>
+                <button class="quick-btn snooze" title="Snooze">Snooze</button>
+                <button class="quick-btn duplicate" title="Duplicate">Duplicate</button>
+                <button class="btn btn-sm btn-outline edit-row">Edit</button>
+                <button class="btn btn-sm btn-outline delete-row">Delete</button>
+            </div></td>`;
+            html += `</tr>`;
         }
     }
     html += `</tbody></table>`;
-    billsTable.innerHTML = html;
-    
-    // Add sorting event listeners
-    billsTable.querySelectorAll('th[data-sort]').forEach(th => {
-        th.style.cursor = 'pointer';
-        th.onclick = () => {
-            let newDir = sortDir === 'asc' ? 'desc' : 'asc';
-            renderBillsList(th.getAttribute('data-sort'), newDir);
-        };
-    });
-    
-    // Add edit/delete event listeners
-    billsTable.querySelectorAll('.edit-bill').forEach(btn => {
+    tableDiv.innerHTML = html;
+    // Quick actions
+    tableDiv.querySelectorAll('.quick-btn.paid').forEach(btn => {
         btn.onclick = function() {
             const id = this.closest('tr').getAttribute('data-id');
-            openEditBillModal(id);
+            const bill = state.data.bills.find(b => String(b.id) === String(id));
+            if (bill) { bill.status = 'Paid'; saveBillsToCSV(); renderBillsList(); }
         };
     });
-    billsTable.querySelectorAll('.delete-bill').forEach(btn => {
+    tableDiv.querySelectorAll('.quick-btn.snooze').forEach(btn => {
         btn.onclick = function() {
             const id = this.closest('tr').getAttribute('data-id');
-            deleteBill(id);
-        };
-    });
-    
-    // Update sticky offsets immediately and after a short delay to ensure proper positioning
-    updateStickyOffsets();
-    
-    // Force another update after a longer delay to ensure it's calculated after rendering
-    setTimeout(() => {
-        updateStickyOffsets();
-        // Let's also add another check for the table's existence
-        const table = billsSection.querySelector('table');
-        if (table) {
-            const thead = table.querySelector('thead');
-            if (thead) {
-                // Force thead to be properly positioned
-                thead.style.position = 'sticky';
-                thead.style.top = `${window.__stickyOffsets?.theadTopOffset || 118}px`;
-                thead.style.zIndex = '1001';
-                thead.style.display = 'table-header-group';
+            const bill = state.data.bills.find(b => String(b.id) === String(id));
+            if (bill && bill.end_date) {
+                const dt = DateTime.fromISO(String(bill.end_date));
+                if (dt.isValid) {
+                    bill.end_date = dt.plus({ days: 7 }).toISODate();
+                    saveBillsToCSV(); renderBillsList();
+                }
             }
-        }
-    }, 100);
+        };
+    });
+    tableDiv.querySelectorAll('.quick-btn.duplicate').forEach(btn => {
+        btn.onclick = function() {
+            const id = this.closest('tr').getAttribute('data-id');
+            const bill = state.data.bills.find(b => String(b.id) === String(id));
+            if (bill) {
+                const copy = { ...bill, id: Date.now(), name: bill.name + ' (Copy)' };
+                state.data.bills.push(copy);
+                saveBillsToCSV(); renderBillsList();
+            }
+        };
+    });
+    // Edit/Delete
+    tableDiv.querySelectorAll('.edit-row').forEach(btn => {
+        btn.onclick = function() {
+            const id = this.closest('tr').getAttribute('data-id');
+            openEditModal(tab, id);
+        };
+    });
+    tableDiv.querySelectorAll('.delete-row').forEach(btn => {
+        btn.onclick = function() {
+            const id = this.closest('tr').getAttribute('data-id');
+            deleteRow(tab, id);
+        };
+    });
+    updateStickyOffsets();
+    setTimeout(updateStickyOffsets, 50);
 }
 
 // Make renderBillsList globally accessible for tabNavigation.js
@@ -1018,6 +1004,62 @@ function deleteBill(id) {
     state.data.bills = state.data.bills.filter(b => String(b.id) !== String(id));
     saveBillsToCSV();
     renderBillsList();
+}
+
+function openEditModal(tab, id) {
+    const findById = arr => arr.find(i => String(i.id) === String(id));
+    if (tab === 'bills') {
+        const bill = findById(state.data.bills); if (!bill) return;
+        document.getElementById('add-bill-modal').style.display = 'block';
+        document.getElementById('bill-name').value = bill.name || '';
+        document.getElementById('bill-amount').value = bill.amount || '';
+        document.getElementById('bill-recurrence').value = bill.recurrence || 'Monthly';
+        document.getElementById('bill-start').value = bill.start_date || '';
+        document.getElementById('bill-end').value = bill.end_date || '';
+        document.getElementById('bill-status').value = bill.status || 'Active';
+        document.getElementById('add-bill-form').setAttribute('data-edit-id', id);
+        return;
+    }
+    if (tab === 'income') {
+        const item = findById(state.data.income); if (!item) return;
+        document.getElementById('add-income-modal').style.display = 'block';
+        document.getElementById('income-source').value = item.source || '';
+        document.getElementById('income-amount').value = item.amount || '';
+        document.getElementById('income-date').value = item.date || '';
+        document.getElementById('income-recurrence').value = item.recurrence || 'Monthly';
+        document.getElementById('income-status').value = item.status || 'Pending';
+        document.getElementById('add-income-form').setAttribute('data-edit-id', id);
+        return;
+    }
+    if (tab === 'transactions') {
+        const item = findById(state.data.transactions); if (!item) return;
+        document.getElementById('add-transaction-modal').style.display = 'block';
+        document.getElementById('transaction-date').value = item.date || '';
+        document.getElementById('transaction-description').value = item.description || '';
+        document.getElementById('transaction-category').value = item.category || '';
+        document.getElementById('transaction-amount').value = item.amount || '';
+        document.getElementById('transaction-status').value = item.status || 'Paid';
+        document.getElementById('add-transaction-form').setAttribute('data-edit-id', id);
+        return;
+    }
+    if (tab === 'budgets') {
+        const item = findById(state.data.budgets); if (!item) return;
+        document.getElementById('add-budget-modal').style.display = 'block';
+        document.getElementById('budget-name').value = item.name || '';
+        document.getElementById('budget-amount').value = item.amount || '';
+        document.getElementById('budget-period').value = item.period || '';
+        document.getElementById('budget-utilization').value = item.utilization || '';
+        document.getElementById('add-budget-form').setAttribute('data-edit-id', id);
+        return;
+    }
+    if (tab === 'categories') {
+        const item = findById(state.data.categories); if (!item) return;
+        document.getElementById('add-category-modal').style.display = 'block';
+        document.getElementById('category-name').value = item.category || '';
+        document.getElementById('subcategory-name').value = item.subcategory || '';
+        document.getElementById('add-category-form').setAttribute('data-edit-id', id);
+        return;
+    }
 }
 
 async function saveBillsToCSV() {
@@ -1148,9 +1190,20 @@ function updateStickyOffsets() {
     const headerHeight = header.offsetHeight;
     const tabsHeight = tabs.offsetHeight;
     const tabsRect = tabs.getBoundingClientRect();
-    // Compute where the bottom of the tabs sits relative to the viewport top, then use that as sticky top
+    // Baseline: stick directly under the tabs
     const tabsBottomFromViewportTop = Math.round(tabsRect.bottom);
-    const theadTop = Math.max(0, tabsBottomFromViewportTop); // pinned just under tabs
+
+    // Make the sticky header sit at the table's own top until that top reaches the tabs.
+    // This guarantees no body rows render above the header.
+    let theadTop = tabsBottomFromViewportTop;
+    try {
+        const active = document.querySelector('.tab-content.active');
+        const table = active ? active.querySelector('table') : null;
+        if (table) {
+            const tableTop = Math.round(table.getBoundingClientRect().top);
+            theadTop = Math.max(0, Math.min(tabsBottomFromViewportTop, tableTop));
+        }
+    } catch {}
 
     // Set sticky offset variables on :root
     document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
@@ -1165,13 +1218,7 @@ function updateStickyOffsets() {
         theadTopOffset: theadTop
     };
 
-    // Ensure each header cell is sticky with the computed offset
-    document.querySelectorAll('table thead th').forEach(th => {
-        th.style.top = `var(--thead-top-offset)`;
-        th.style.position = 'sticky';
-        th.style.zIndex = '1001';
-        th.style.background = getComputedStyle(document.documentElement).getPropertyValue('--bg-800') || '#23232a';
-    });
+    // Let CSS sticky handle the position; no per-cell overrides needed
 }
 // Minimal backup implementation to keep UI functional
 function createBackup() {

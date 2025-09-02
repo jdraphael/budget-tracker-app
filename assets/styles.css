@@ -282,6 +282,7 @@ table {
     width: 100%;
     border-collapse: separate; /* sticky works more reliably with separate */
     border-spacing: 0;         /* preserve collapsed look */
+    table-layout: fixed;       /* keep column widths consistent */
     margin-bottom: 2rem;
     background: var(--bg-700);
     border-radius: var(--border-radius);
@@ -290,17 +291,84 @@ table {
 
 thead {
     background: var(--bg-800);
-    /* Do not make the thead sticky; make individual th cells sticky for better support */
-    position: relative;
-    z-index: 1;
-}
-
-/* Make each header cell sticky so it pins under the tabs across browsers */
-thead th {
     position: sticky;
     top: var(--thead-top-offset, calc(var(--header-height, 64px) + var(--tabs-height, 48px)));
     z-index: 1001;
-    background: var(--bg-800);
+}
+
+.table-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    margin: 0.25rem 0 0.5rem 0;
+}
+
+/* Bills Tab Next-Gen Enhancements */
+.bills-table table {
+    border: 2px solid var(--accent);
+    box-shadow: 0 4px 24px rgba(96,165,250,0.10);
+    background: linear-gradient(90deg, var(--bg-700) 80%, var(--accent) 100%);
+}
+.bills-table th {
+    background: linear-gradient(90deg, var(--accent) 0%, var(--bg-800) 100%);
+    color: #fff;
+    font-size: 1.1rem;
+    letter-spacing: 0.02em;
+    border-bottom: 3px solid var(--accent);
+}
+.bills-table td {
+    position: relative;
+    font-size: 1.05rem;
+    background: var(--bg-700);
+    transition: background 0.2s;
+}
+.bills-table tr.overdue td {
+    background: linear-gradient(90deg, var(--negative) 10%, var(--bg-700) 90%);
+    color: #fff;
+}
+.bills-table .badge-recurring {
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 12px;
+    margin-left: 0.5rem;
+    font-weight: 600;
+    box-shadow: 0 1px 4px rgba(96,165,250,0.12);
+}
+.bills-table .quick-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+.bills-table .quick-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(96,165,250,0.08);
+    transition: background 0.2s;
+}
+.bills-table .quick-btn:hover {
+    background: var(--accent-hover);
+}
+.bills-table .quick-btn.duplicate {
+    background: var(--warning);
+    color: #222;
+}
+.bills-table .quick-btn.snooze {
+    background: var(--bg-600);
+    color: var(--accent);
+}
+.bills-table .quick-btn.paid {
+    background: var(--positive);
+    color: #fff;
+}
+.bills-table .quick-btn.paid:hover {
+    background: #16a34a;
 }
 
 th {
@@ -310,6 +378,8 @@ th {
     color: var(--fg-100);
     border-bottom: 2px solid var(--border);
     font-size: 1.05rem;
+    background: var(--bg-800); /* ensure header row is opaque while sticky */
+    box-shadow: 0 1px 0 rgba(0,0,0,0.15);
 }
 
 td {
@@ -317,6 +387,23 @@ td {
     border-bottom: 1px solid var(--border);
     font-size: 1rem;
     color: var(--fg-200);
+}
+
+.th-inner { display:flex; align-items:center; gap:0.5rem; }
+.th-filter { display:flex; }
+.th-filter-input { width: 120px; padding: 0.25rem 0.5rem; background: var(--bg-700); border-radius: 6px; border:1px solid var(--border); color: var(--fg-100); font-size: 0.9rem; }
+.th-sort { opacity: 0.6; font-size: 0.9rem; }
+
+.cell-edit {
+    min-height: 1.6rem;
+    padding: 0.4rem 0.5rem;
+    background: var(--bg-600);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    outline: none;
+}
+.cell-edit:focus {
+    box-shadow: 0 0 0 2px var(--accent);
 }
 
 tr:hover {
