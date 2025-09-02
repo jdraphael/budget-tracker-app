@@ -44,6 +44,7 @@ async function fetchCSVText(fileName) {
 // Luxon for date manipulation
 const DateTime = luxon.DateTime;
 
+// Expose state so modular submodules (like src/bills.js) can access it
 const state = {
     activeTab: 'dashboard',
     currentMonth: DateTime.now().toFormat('yyyy-MM'),
@@ -64,6 +65,8 @@ const state = {
 };
 // Keep active Chart instances so we can destroy them before reusing canvases
 state.charts = {};
+// Make global for modules
+window.state = state;
 
 // Charts: Render summary charts for each tab
 function renderTabCharts(tab, columns, data) {
@@ -186,6 +189,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Initialize UI and tab navigation
     setupTabNavigation();
+    // Lazy-load bills module and initialize it with the bills container
+    try {
+        const mod = await import('./bills.js');
+        if (mod && typeof mod.default === 'function') mod.default({ containerId: 'bills' });
+    } catch (e) { console.warn('Bills module failed to load', e); }
     // Wire interactive controls
     try { setupEventListeners(); } catch {}
     window.onTabSwitch = function(tabId) {
