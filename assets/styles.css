@@ -277,7 +277,8 @@ header * {
 
 .table-container {
     position: relative;
-    overflow-x: auto;
+    /* Allow tables to wrap and avoid forcing a horizontal scrollbar globally. Specific tabs (like Bills) opt into hiding overflow when needed. */
+    overflow-x: visible;
     /* Remove any vertical overflow to preserve sticky context */
 }
 
