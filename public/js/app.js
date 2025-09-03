@@ -1149,25 +1149,9 @@ function renderBillsList(sortKey = 'name', sortDir = 'asc') {
         };
     });
     
-    // Update sticky offsets immediately and after a short delay to ensure proper positioning
+    // Update sticky offsets now and shortly after render to ensure CSS var is correct
     updateStickyOffsets();
-    
-    // Force another update after a longer delay to ensure it's calculated after rendering
-    setTimeout(() => {
-        updateStickyOffsets();
-        // Let's also add another check for the table's existence
-        const table = billsSection.querySelector('table');
-        if (table) {
-            const thead = table.querySelector('thead');
-            if (thead) {
-                // Force thead to be properly positioned
-                thead.style.position = 'sticky';
-                thead.style.top = `${window.__stickyOffsets?.theadTopOffset || 118}px`;
-                thead.style.zIndex = '1001';
-                thead.style.display = 'table-header-group';
-            }
-        }
-    }, 100);
+    setTimeout(updateStickyOffsets, 100);
 }
 
 // Make renderBillsList globally accessible for tabNavigation.js
