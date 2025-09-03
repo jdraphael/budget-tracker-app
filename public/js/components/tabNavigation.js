@@ -33,6 +33,15 @@ export function switchTab(tabId) {
         content.classList.toggle('active', content.id === tabId);
     });
     window.currentTab = tabId;
+    // Persist active tab in global state and preferences if available
+    try {
+        if (window.state) {
+            window.state.activeTab = tabId;
+        }
+        if (typeof window.saveUIPreferences === 'function') {
+            window.saveUIPreferences();
+        }
+    } catch (e) { /* non-fatal */ }
     
     // Special handling for bills tab to ensure table is rendered
     if (tabId === 'bills') {
