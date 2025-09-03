@@ -577,6 +577,23 @@ function setupEventListeners() {
 }
 
 // Add import buttons to filter bars
+// Helpers for reading and storing filter selections
+function getFilterValues(filterDiv) {
+    const filters = {};
+    filterDiv.querySelectorAll('.filter-select').forEach(select => {
+        const column = select.getAttribute('data-column');
+        if (select.value) filters[column] = select.value;
+    });
+    return filters;
+}
+
+function setFilterValue(tab, column, value) {
+    // Simple placeholder to remember chosen filters; can be expanded later
+    if (!state.uiState.filterValues) state.uiState.filterValues = {};
+    if (!state.uiState.filterValues[tab]) state.uiState.filterValues[tab] = {};
+    state.uiState.filterValues[tab][column] = value;
+}
+
 function addFilterSearchUI(tab, columns) {
     const section = document.getElementById(tab);
     let filterDiv = section.querySelector('.filter-bar');
@@ -887,111 +904,108 @@ function renderCharts() {
 }
 
 // Add this function to render bills in the Bills tab
-function renderBillsList() {
-    addFilterSearchUI('bills', ['name','amount','recurrence','start_date','end_date','status']);
-    renderAnalytics('bills', ['name','amount','recurrence','start_date','end_date','status'], state.data.bills);
-    renderTabCharts('bills', ['name','amount','recurrence','start_date','end_date','status'], state.data.bills);
-    // Custom next-gen bills table rendering
-    const tab = 'bills';
-    const columns = ['name','amount','recurrence','start_date','end_date','status'];
-    const data = filterToCurrentMonth(tab, state.data.bills);
-    const section = document.getElementById(tab);
-    let tableDiv = section.querySelector('.table-container.bills-table');
-    if (!tableDiv) {
-        tableDiv = document.createElement('div');
-    tableDiv.className = 'table-container bills-table';
-    // Bills polish: avoid horizontal scrolling and let table wrap where possible
-    tableDiv.style.overflowX = 'hidden';
-    tableDiv.style.width = '100%';
-        section.appendChild(tableDiv);
-    }
-    let html = `<div class="table-toolbar">
-        <button class="btn btn-sm btn-outline toggle-grid">Edit Grid</button>
-        <button class="btn btn-sm btn-outline clear-filters">Clear Filters</button>
-    </div>`;
-    html += `<table><thead><tr>`;
-    columns.forEach(col => {
-        const label = col.charAt(0).toUpperCase() + col.slice(1);
-        html += `<th>${label}</th>`;
+function renderBillsList(sortKey = 'name', sortDir = 'asc') {
+    const billsSection = document.getElementById('bills');
+    
+    console.log("Creating initial bills table");
+    
+    // Clean up any existing content first except for the action bar
+    // Find all child elements that are not the action-bar and remove them
+    Array.from(billsSection.children).forEach(child => {
+        if (!child.classList.contains('action-bar')) {
+            child.remove();
+        }
     });
-    html += `<th>Quick Actions</th></tr></thead><tbody>`;
-    if (data.length === 0) {
-        html += `<tr><td colspan='${columns.length + 1}' style='text-align:center;color:var(--fg-300);'>No bills added yet.</td></tr>`;
+    
+    // Create a fresh table container
+    const billsTable = document.createElement('div');
+    billsTable.className = 'table-container bills-table';
+    billsSection.appendChild(billsTable);
+    
+    // Sort bills
+    let bills = [...state.data.bills];
+    bills.sort((a, b) => {
+        if (sortKey === 'amount') {
+            return sortDir === 'asc' ? a.amount - b.amount : b.amount - a.amount;
+        } else {
+            return sortDir === 'asc' ? String(a[sortKey]).localeCompare(String(b[sortKey])) : String(b[sortKey]).localeCompare(String(a[sortKey]));
+        }
+    });
+    
+    // Use simple innerHTML approach for consistency across environments
+    let html = `<table><thead><tr>
+        <th data-sort="name">Name</th>
+        <th data-sort="amount">Amount</th>
+        <th data-sort="recurrence">Recurrence</th>
+        <th data-sort="start_date">Start</th>
+        <th data-sort="end_date">End</th>
+        <th data-sort="status">Status</th>
+        <th>Actions</th>
+    </tr></thead><tbody>`;
+    
+    if (bills.length === 0) {
+        html += `<tr><td colspan='7' style='text-align:center;color:var(--fg-300);'>No bills added yet.</td></tr>`;
     } else {
-        for (const bill of data) {
-            // Overdue logic
-            let isOverdue = false;
-            if (bill.status && String(bill.status).toLowerCase() === 'active') {
-                const today = DateTime.now();
-                const dueDate = bill.end_date ? DateTime.fromISO(String(bill.end_date)) : null;
-                if (dueDate && dueDate.isValid && dueDate < today) isOverdue = true;
-            }
-            html += `<tr data-id="${bill.id}"${isOverdue ? ' class="overdue"' : ''}>`;
-            html += `<td>${bill.name || '-'}${bill.recurrence && bill.recurrence !== 'Once' ? `<span class="badge-recurring">${bill.recurrence}</span>` : ''}</td>`;
-            html += `<td>${formatCurrency(Number(bill.amount) || 0)}</td>`;
-            html += `<td>${bill.recurrence || '-'}</td>`;
-            html += `<td>${bill.start_date || '-'}</td>`;
-            html += `<td>${bill.end_date || '-'}</td>`;
-            html += `<td>${bill.status || 'Unknown'}</td>`;
-            html += `<td><div class="quick-actions">
-                <button class="quick-btn paid" title="Mark Paid">Paid</button>
-                <button class="quick-btn snooze" title="Snooze">Snooze</button>
-                <button class="quick-btn duplicate" title="Duplicate">Duplicate</button>
-                <button class="btn btn-sm btn-outline edit-row">Edit</button>
-                <button class="btn btn-sm btn-outline delete-row">Delete</button>
-            </div></td>`;
-            html += `</tr>`;
+        for (const bill of bills) {
+            html += `<tr data-id="${bill.id}">
+                <td>${bill.name || '-'}</td>
+                <td>${formatCurrency(Number(bill.amount) || 0)}</td>
+                <td>${bill.recurrence || '-'}</td>
+                <td>${bill.start_date || '-'}</td>
+                <td>${bill.end_date || '-'}</td>
+                <td>${bill.status || 'Unknown'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline edit-bill">Edit</button>
+                    <button class="btn btn-sm btn-outline delete-bill">Delete</button>
+                </td>
+            </tr>`;
         }
     }
     html += `</tbody></table>`;
-    tableDiv.innerHTML = html;
-    // Quick actions
-    tableDiv.querySelectorAll('.quick-btn.paid').forEach(btn => {
-        btn.onclick = function() {
-            const id = this.closest('tr').getAttribute('data-id');
-            const bill = state.data.bills.find(b => String(b.id) === String(id));
-            if (bill) { bill.status = 'Paid'; saveBillsToCSV(); renderBillsList(); }
+    billsTable.innerHTML = html;
+    
+    // Add sorting event listeners
+    billsTable.querySelectorAll('th[data-sort]').forEach(th => {
+        th.style.cursor = 'pointer';
+        th.onclick = () => {
+            let newDir = sortDir === 'asc' ? 'desc' : 'asc';
+            renderBillsList(th.getAttribute('data-sort'), newDir);
         };
     });
-    tableDiv.querySelectorAll('.quick-btn.snooze').forEach(btn => {
+    
+    // Add edit/delete event listeners
+    billsTable.querySelectorAll('.edit-bill').forEach(btn => {
         btn.onclick = function() {
             const id = this.closest('tr').getAttribute('data-id');
-            const bill = state.data.bills.find(b => String(b.id) === String(id));
-            if (bill && bill.end_date) {
-                const dt = DateTime.fromISO(String(bill.end_date));
-                if (dt.isValid) {
-                    bill.end_date = dt.plus({ days: 7 }).toISODate();
-                    saveBillsToCSV(); renderBillsList();
-                }
-            }
+            openEditBillModal(id);
         };
     });
-    tableDiv.querySelectorAll('.quick-btn.duplicate').forEach(btn => {
+    billsTable.querySelectorAll('.delete-bill').forEach(btn => {
         btn.onclick = function() {
             const id = this.closest('tr').getAttribute('data-id');
-            const bill = state.data.bills.find(b => String(b.id) === String(id));
-            if (bill) {
-                const copy = { ...bill, id: Date.now(), name: bill.name + ' (Copy)' };
-                state.data.bills.push(copy);
-                saveBillsToCSV(); renderBillsList();
-            }
+            deleteBill(id);
         };
     });
-    // Edit/Delete
-    tableDiv.querySelectorAll('.edit-row').forEach(btn => {
-        btn.onclick = function() {
-            const id = this.closest('tr').getAttribute('data-id');
-            openEditModal(tab, id);
-        };
-    });
-    tableDiv.querySelectorAll('.delete-row').forEach(btn => {
-        btn.onclick = function() {
-            const id = this.closest('tr').getAttribute('data-id');
-            deleteRow(tab, id);
-        };
-    });
+    
+    // Update sticky offsets immediately and after a short delay to ensure proper positioning
     updateStickyOffsets();
-    setTimeout(updateStickyOffsets, 50);
+    
+    // Force another update after a longer delay to ensure it's calculated after rendering
+    setTimeout(() => {
+        updateStickyOffsets();
+        // Let's also add another check for the table's existence
+        const table = billsSection.querySelector('table');
+        if (table) {
+            const thead = table.querySelector('thead');
+            if (thead) {
+                // Force thead to be properly positioned
+                thead.style.position = 'sticky';
+                thead.style.top = `${window.__stickyOffsets?.theadTopOffset || 118}px`;
+                thead.style.zIndex = '1001';
+                thead.style.display = 'table-header-group';
+            }
+        }
+    }, 100);
 }
 
 // Make renderBillsList globally accessible for tabNavigation.js
@@ -1015,62 +1029,6 @@ function deleteBill(id) {
     state.data.bills = state.data.bills.filter(b => String(b.id) !== String(id));
     saveBillsToCSV();
     renderBillsList();
-}
-
-function openEditModal(tab, id) {
-    const findById = arr => arr.find(i => String(i.id) === String(id));
-    if (tab === 'bills') {
-        const bill = findById(state.data.bills); if (!bill) return;
-        document.getElementById('add-bill-modal').style.display = 'block';
-        document.getElementById('bill-name').value = bill.name || '';
-        document.getElementById('bill-amount').value = bill.amount || '';
-        document.getElementById('bill-recurrence').value = bill.recurrence || 'Monthly';
-        document.getElementById('bill-start').value = bill.start_date || '';
-        document.getElementById('bill-end').value = bill.end_date || '';
-        document.getElementById('bill-status').value = bill.status || 'Active';
-        document.getElementById('add-bill-form').setAttribute('data-edit-id', id);
-        return;
-    }
-    if (tab === 'income') {
-        const item = findById(state.data.income); if (!item) return;
-        document.getElementById('add-income-modal').style.display = 'block';
-        document.getElementById('income-source').value = item.source || '';
-        document.getElementById('income-amount').value = item.amount || '';
-        document.getElementById('income-date').value = item.date || '';
-        document.getElementById('income-recurrence').value = item.recurrence || 'Monthly';
-        document.getElementById('income-status').value = item.status || 'Pending';
-        document.getElementById('add-income-form').setAttribute('data-edit-id', id);
-        return;
-    }
-    if (tab === 'transactions') {
-        const item = findById(state.data.transactions); if (!item) return;
-        document.getElementById('add-transaction-modal').style.display = 'block';
-        document.getElementById('transaction-date').value = item.date || '';
-        document.getElementById('transaction-description').value = item.description || '';
-        document.getElementById('transaction-category').value = item.category || '';
-        document.getElementById('transaction-amount').value = item.amount || '';
-        document.getElementById('transaction-status').value = item.status || 'Paid';
-        document.getElementById('add-transaction-form').setAttribute('data-edit-id', id);
-        return;
-    }
-    if (tab === 'budgets') {
-        const item = findById(state.data.budgets); if (!item) return;
-        document.getElementById('add-budget-modal').style.display = 'block';
-        document.getElementById('budget-name').value = item.name || '';
-        document.getElementById('budget-amount').value = item.amount || '';
-        document.getElementById('budget-period').value = item.period || '';
-        document.getElementById('budget-utilization').value = item.utilization || '';
-        document.getElementById('add-budget-form').setAttribute('data-edit-id', id);
-        return;
-    }
-    if (tab === 'categories') {
-        const item = findById(state.data.categories); if (!item) return;
-        document.getElementById('add-category-modal').style.display = 'block';
-        document.getElementById('category-name').value = item.category || '';
-        document.getElementById('subcategory-name').value = item.subcategory || '';
-        document.getElementById('add-category-form').setAttribute('data-edit-id', id);
-        return;
-    }
 }
 
 async function saveBillsToCSV() {
