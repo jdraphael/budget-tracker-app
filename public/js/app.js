@@ -1308,35 +1308,46 @@ function updateStickyOffsets() {
     const headerHeight = header.offsetHeight;
     const tabsHeight = tabs.offsetHeight;
     const tabsRect = tabs.getBoundingClientRect();
-    // Baseline: stick directly under the tabs
     const tabsBottomFromViewportTop = Math.round(tabsRect.bottom);
 
-    // Make the sticky header sit at the table's own top until that top reaches the tabs.
-    // This guarantees no body rows render above the header.
-    let theadTop = tabsBottomFromViewportTop;
+    // Default desired sticky top: just under tabs
+    let desiredTop = tabsBottomFromViewportTop;
+
+    // If Bills tab is active, keep table header below the Bills action bar
     try {
         const active = document.querySelector('.tab-content.active');
+        const isBills = active && active.id === 'bills';
+        if (isBills) {
+            const actionBar = active.querySelector('.action-bar');
+            if (actionBar) {
+                const abStyles = getComputedStyle(actionBar);
+                const marginBottom = Math.ceil(parseFloat(abStyles.marginBottom || '0'));
+                const actionBarHeight = actionBar.offsetHeight + marginBottom;
+                // Expose the Bills action bar height for CSS to size the scroll container
+                try { active.style.setProperty('--bills-actionbar-height', `${actionBarHeight}px`); } catch {}
+                desiredTop = tabsBottomFromViewportTop + actionBarHeight;
+            }
+        }
+        // Respect the table's own top so the header doesn't float above the table before it reaches that point
         const table = active ? active.querySelector('table') : null;
         if (table) {
             const tableTop = Math.round(table.getBoundingClientRect().top);
-            theadTop = Math.max(0, Math.min(tabsBottomFromViewportTop, tableTop));
+            desiredTop = Math.max(0, Math.min(desiredTop, tableTop));
         }
     } catch {}
 
     // Set sticky offset variables on :root
     document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
     document.documentElement.style.setProperty('--tabs-height', `${tabsHeight}px`);
-    document.documentElement.style.setProperty('--thead-top-offset', `${theadTop}px`);
+    document.documentElement.style.setProperty('--thead-top-offset', `${desiredTop}px`);
 
-    // Expose computed offsets for automated tests
+    // Expose computed offsets for automated tests and debugging
     window.__stickyOffsets = {
         headerHeight,
         tabsHeight,
         tabsBottom: tabsBottomFromViewportTop,
-        theadTopOffset: theadTop
+        theadTopOffset: desiredTop
     };
-
-    // Let CSS sticky handle the position; no per-cell overrides needed
 }
 // Minimal backup implementation to keep UI functional
 function createBackup() {

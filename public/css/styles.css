@@ -297,7 +297,29 @@ thead {
     background: var(--bg-800);
     position: sticky;
     top: var(--thead-top-offset, calc(var(--header-height, 64px) + var(--tabs-height, 48px)));
-    z-index: 1001;
+    z-index: 1000; /* below sticky action bars */
+}
+
+/* Keep tab-specific action bars sticky beneath global tabs */
+#bills .action-bar {
+    position: sticky;
+    top: calc(var(--header-height, 64px) + var(--tabs-height, 48px));
+    z-index: 1002; /* above table header */
+    background: var(--bg-700); /* solid to prevent bleed-through */
+    backdrop-filter: none;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Bills: make the table area its own scroll container below the sticky action bar */
+#bills .table-container.bills-table {
+    max-height: calc(100vh - var(--header-height, 64px) - var(--tabs-height, 48px) - var(--bills-actionbar-height, 64px) - 16px);
+    overflow: auto; /* vertical scroll within the bills area */
+}
+
+/* Within the scroll container, pin the thead to the container's top */
+#bills .bills-table thead {
+    top: 0; /* relative to scroll container */
+    z-index: 1;
 }
 
 .table-toolbar {

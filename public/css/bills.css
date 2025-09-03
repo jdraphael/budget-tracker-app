@@ -60,7 +60,7 @@
 .bills-table th, .bills-table td { padding:0.75rem 0.6rem; font-size:0.95rem; border-bottom:1px solid var(--border,#2a2a36); line-height:1.35; }
 .bills-table th { background:var(--bg-800,#39394a); color:var(--fg-100,#fff); font-weight:700; }
 /* Use the same sticky behavior and offset as global tables to avoid overlapping the app header/tabs */
-.bills-table thead { position: sticky; top: var(--thead-top-offset, calc(var(--header-height, 64px) + var(--tabs-height, 48px))); z-index: 1001; }
+.bills-table thead { position: sticky; top: var(--thead-top-offset, calc(var(--header-height, 64px) + var(--tabs-height, 48px))); z-index: 1000; }
 
 /* Overdue rows: subtle left border + faint tint, no gradient */
 .bills-table tr.overdue td { background: rgba(239,68,68,0.06); color:var(--fg-100); border-left:4px solid var(--negative); }
