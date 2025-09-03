@@ -1,11 +1,16 @@
 // app.js - Budget Tracker Main JS
-import { setupTabNavigation, switchTab } from '../components/tabNavigation.js';
-import { parseCSV, calculateTotals } from '../utils/dataHelpers.js';
+import { setupTabNavigation, switchTab } from './components/tabNavigation.js';
+import { parseCSV, calculateTotals } from './utils/dataHelpers.js';
 
 // Resolve and fetch asset files robustly across different hosting setups
 async function fetchCSVText(fileName) {
     const candidates = [];
-    // Relative to HTML document
+    // Prefer new public data locations under static root
+    candidates.push(`./data/${fileName}`);
+    candidates.push(`/data/${fileName}`);
+    try { candidates.push(new URL(`./data/${fileName}`, document.baseURI).href); } catch {}
+    try { candidates.push(new URL(`./data/${fileName}`, import.meta.url).href); } catch {}
+    // Back-compat fallbacks for legacy assets path
     candidates.push(`../assets/${fileName}`);
     candidates.push(`./assets/${fileName}`);
     candidates.push(`/assets/${fileName}`);
@@ -215,6 +220,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     checkUserLogin();
     // Load CSV data from assets so UI has data to render
     await loadAllData();
+    // Immediately render Bills once after data load so the table appears without any extra clicks
+    try { if (typeof renderBillsList === 'function') renderBillsList(); } catch {}
 
     // Run on initial load and after a short delay to ensure elements are rendered
     requestAnimationFrame(updateStickyOffsets);
@@ -226,11 +233,15 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Initialize UI and tab navigation
     setupTabNavigation();
-    // Lazy-load bills module and initialize it with the bills container
-    try {
-        const mod = await import('./bills.js');
-        if (mod && typeof mod.default === 'function') mod.default({ containerId: 'bills' });
-    } catch (e) { console.warn('Bills module failed to load', e); }
+    // Optional: an advanced Bills module exists, but it expects different data shape.
+    // To keep the CSV-driven bills table working out-of-the-box, skip loading it by default.
+    const USE_ADVANCED_BILLS = false;
+    if (USE_ADVANCED_BILLS) {
+        try {
+            const mod = await import('./bills.js');
+            if (mod && typeof mod.default === 'function') mod.default({ containerId: 'bills' });
+        } catch (e) { console.warn('Bills module failed to load', e); }
+    }
     // Wire interactive controls
     try { setupEventListeners(); } catch {}
     window.onTabSwitch = function(tabId) {
@@ -596,13 +607,14 @@ function setupEventListeners() {
     document.getElementById('month-select').addEventListener('change', function() {
         state.currentMonth = this.value;
         saveUIPreferences();
-    // Re-render current tab's table with new month filter
+    // Re-render current tab's content with new month filter
     const tab = state.activeTab;
     if (tab === 'bills') renderBillsList();
     if (tab === 'income') renderIncomeList();
     if (tab === 'transactions') renderTransactionsList();
     if (tab === 'budgets') renderBudgetsList();
     if (tab === 'categories') renderCategoriesList();
+    if (tab === 'dashboard') { updateDashboardKPIs(); renderCharts(); }
     });
     document.getElementById('global-search').addEventListener('input', function() {
         state.uiState.searchQuery = this.value;
@@ -897,47 +909,195 @@ function renderCharts() {
         }
     });
 
-    const incomeExpenseCtx = document.getElementById(incomeCanvasId).getContext('2d');
-    state.charts[incomeCanvasId] = new Chart(incomeExpenseCtx, {
-        type: 'bar',
-        data: {
-            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-            datasets: [
-                { label: 'Income', data: [1200, 1500, 1700, 1000], backgroundColor: '#4CAF50' },
-                { label: 'Expenses', data: [980, 1100, 1250, 950], backgroundColor: '#F44336' }
-            ]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+    const ym = state.currentMonth;
+    const monthStart = DateTime.fromFormat(ym + '-01', 'yyyy-MM-dd');
+    const monthEnd = monthStart.endOf('month');
+    const inMonth = d => {
+        const dt = DateTime.fromISO(String(d));
+        return dt.isValid && dt >= monthStart && dt <= monthEnd;
+    };
+    const weekIndex = d => {
+        const dt = DateTime.fromISO(String(d));
+        if (!dt.isValid) return -1;
+        const day = dt.day;
+        if (day <= 7) return 0;
+        if (day <= 14) return 1;
+        if (day <= 21) return 2;
+        return 3;
+    };
+
+    // 1) Income vs Expenses by week (4 buckets)
+    const weeksLabels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+    const weeklyIncome = [0, 0, 0, 0];
+    const weeklyExpenses = [0, 0, 0, 0];
+
+    // Income from income.csv
+    (state.data.income || []).forEach(item => {
+        if (!inMonth(item.date)) return;
+        const idx = weekIndex(item.date);
+        if (idx >= 0) weeklyIncome[idx] += Number(item.amount || 0) || 0;
     });
-    const spendingCtx = document.getElementById(spendingCanvasId).getContext('2d');
-    state.charts[spendingCanvasId] = new Chart(spendingCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Housing', 'Utilities', 'Food', 'Transportation', 'Healthcare', 'Entertainment'],
-            datasets: [{
-                data: [1200, 350, 470, 280, 150, 100],
-                backgroundColor: ['#4E9AF1', '#4CAF50', '#FF9800', '#9C27B0', '#F44336', '#00BCD4']
-            }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+    // Income from positive transactions and expenses from negative transactions
+    (state.data.transactions || []).forEach(t => {
+        const amt = Number(t.amount || 0) || 0;
+        if (!inMonth(t.date)) return;
+        const idx = weekIndex(t.date);
+        if (idx < 0) return;
+        if (amt > 0) weeklyIncome[idx] += amt; else weeklyExpenses[idx] += Math.abs(amt);
     });
-    const budgetCtx = document.getElementById(budgetCanvasId).getContext('2d');
-    state.charts[budgetCanvasId] = new Chart(budgetCtx, {
-        type: 'bar',
-        data: {
-            labels: ['Housing', 'Utilities', 'Food', 'Transport', 'Healthcare', 'Personal'],
-            datasets: [
-                { label: 'Budgeted', data: [1200, 300, 400, 250, 150, 200], backgroundColor: '#3F51B5' },
-                { label: 'Actual', data: [1200, 350, 470, 280, 120, 180], backgroundColor: '#FF9800' }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'top' } },
-            scales: { x: { stacked: true }, y: { stacked: true } }
+
+    const incomeExpenseCtxEl = document.getElementById(incomeCanvasId);
+    if (incomeExpenseCtxEl) {
+        const incomeExpenseCtx = incomeExpenseCtxEl.getContext('2d');
+        state.charts[incomeCanvasId] = new Chart(incomeExpenseCtx, {
+            type: 'bar',
+            data: {
+                labels: weeksLabels,
+                datasets: [
+                    { label: 'Income', data: weeklyIncome, backgroundColor: '#4CAF50' },
+                    { label: 'Expenses', data: weeklyExpenses, backgroundColor: '#F44336' }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+        });
+    }
+
+    // 2) Spending by category (top 6 categories + Other)
+    const expenseByCat = new Map();
+    (state.data.transactions || []).forEach(t => {
+        const amt = Number(t.amount || 0) || 0;
+        if (!inMonth(t.date) || amt >= 0) return;
+        const cat = String(t.category || 'Uncategorized');
+        expenseByCat.set(cat, (expenseByCat.get(cat) || 0) + Math.abs(amt));
+    });
+    const sortedCats = Array.from(expenseByCat.entries()).sort((a, b) => b[1] - a[1]);
+    const topN = 6;
+    const topCats = sortedCats.slice(0, topN);
+    const otherTotal = sortedCats.slice(topN).reduce((s, [, v]) => s + v, 0);
+    const catLabels = topCats.map(([k]) => k).concat(otherTotal > 0 ? ['Other'] : []);
+    const catData = topCats.map(([, v]) => v).concat(otherTotal > 0 ? [otherTotal] : []);
+    const palette = ['#4E9AF1', '#4CAF50', '#FF9800', '#9C27B0', '#F44336', '#00BCD4', '#607D8B'];
+
+    const spendingCtxEl = document.getElementById(spendingCanvasId);
+    if (spendingCtxEl) {
+        const spendingCtx = spendingCtxEl.getContext('2d');
+        state.charts[spendingCanvasId] = new Chart(spendingCtx, {
+            type: 'doughnut',
+            data: {
+                labels: catLabels,
+                datasets: [{
+                    data: catData,
+                    backgroundColor: catLabels.map((_, i) => palette[i % palette.length])
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+        });
+    }
+
+    // 3) Budget vs Actual by category for the month
+    const budgetLabels = (state.data.budgets || []).map(b => String(b.name || ''));
+    const budgeted = (state.data.budgets || []).map(b => Number(b.amount || 0) || 0);
+    const actualByCat = new Map();
+    (state.data.transactions || []).forEach(t => {
+        const amt = Number(t.amount || 0) || 0;
+        if (!inMonth(t.date) || amt >= 0) return;
+        const cat = String(t.category || '');
+        actualByCat.set(cat, (actualByCat.get(cat) || 0) + Math.abs(amt));
+    });
+    const actual = budgetLabels.map(cat => actualByCat.get(cat) || 0);
+
+    const budgetCtxEl = document.getElementById(budgetCanvasId);
+    if (budgetCtxEl) {
+        const budgetCtx = budgetCtxEl.getContext('2d');
+        state.charts[budgetCanvasId] = new Chart(budgetCtx, {
+            type: 'bar',
+            data: {
+                labels: budgetLabels,
+                datasets: [
+                    { label: 'Budgeted', data: budgeted, backgroundColor: '#3F51B5' },
+                    { label: 'Actual', data: actual, backgroundColor: '#FF9800' }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: { x: { stacked: false }, y: { stacked: false } }
+            }
+        });
+    }
+}
+
+// Compute and update Dashboard KPI values from current data
+function updateDashboardKPIs() {
+    try {
+        const ym = state.currentMonth;
+        const monthStart = DateTime.fromFormat(ym + '-01', 'yyyy-MM-dd');
+        const monthEnd = monthStart.endOf('month');
+        const inMonth = d => {
+            const dt = DateTime.fromISO(String(d));
+            return dt.isValid && dt >= monthStart && dt <= monthEnd;
+        };
+
+        // Totals
+        let totalIncome = 0;
+        let totalExpenses = 0;
+
+        (state.data.income || []).forEach(i => {
+            if (!inMonth(i.date)) return;
+            const v = Number(i.amount || 0) || 0;
+            totalIncome += v;
+        });
+        (state.data.transactions || []).forEach(t => {
+            if (!inMonth(t.date)) return;
+            const v = Number(t.amount || 0) || 0;
+            if (v >= 0) totalIncome += v; else totalExpenses += Math.abs(v);
+        });
+        const netAmount = totalIncome - totalExpenses;
+
+        // Budget utilization: average of provided utilization values if present
+        let budgetUtilization = 0;
+        if (state.data.budgets && state.data.budgets.length) {
+            const sum = state.data.budgets.reduce((s, b) => {
+                const v = Number(b.utilization || 0);
+                return s + (isNaN(v) ? 0 : v);
+            }, 0);
+            budgetUtilization = Math.round(sum / state.data.budgets.length);
         }
-    });
+
+        const container = document.querySelector('#dashboard .kpi-container');
+        if (!container) return;
+        const cards = Array.from(container.querySelectorAll('.kpi-card'));
+        for (const card of cards) {
+            const title = (card.querySelector('.kpi-title') || {}).textContent || '';
+            const valueEl = card.querySelector('.kpi-value');
+            if (!valueEl) continue;
+            if (/Total Income/i.test(title)) {
+                valueEl.textContent = formatCurrency(totalIncome);
+                valueEl.classList.add('positive-value');
+                valueEl.classList.remove('negative-value');
+            } else if (/Total Expenses/i.test(title)) {
+                valueEl.textContent = formatCurrency(totalExpenses);
+                valueEl.classList.add('negative-value');
+                valueEl.classList.remove('positive-value');
+            } else if (/Net Amount/i.test(title)) {
+                valueEl.textContent = formatCurrency(netAmount);
+                if (netAmount < 0) {
+                    valueEl.classList.add('negative-value');
+                    valueEl.classList.remove('positive-value');
+                } else {
+                    valueEl.classList.add('positive-value');
+                    valueEl.classList.remove('negative-value');
+                }
+            } else if (/Budget Utilization/i.test(title)) {
+                valueEl.textContent = `${budgetUtilization}%`;
+                valueEl.classList.remove('positive-value', 'negative-value');
+            }
+        }
+    } catch (e) {
+        // Avoid crashing dashboard on partial data
+        console.warn('KPI update failed:', e);
+    }
 }
 
 // Add this function to render bills in the Bills tab

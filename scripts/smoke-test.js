@@ -6,7 +6,8 @@ const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer');
 
-const URL = process.env.TEST_URL || 'http://127.0.0.1:5500/public/index.html';
+// Match `npm start` which serves `./public` at http://127.0.0.1:5500/
+const URL = process.env.TEST_URL || 'http://127.0.0.1:5500/';
 const viewports = [
   { name: 'desktop', width: 1366, height: 900 },
   { name: 'tablet', width: 900, height: 800 },
