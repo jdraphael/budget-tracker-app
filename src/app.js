@@ -68,6 +68,43 @@ state.charts = {};
 // Make global for modules
 window.state = state;
 
+// Dynamically compute sticky offsets so table headers "freeze" below
+// the app header and tabs, regardless of actual rendered heights.
+function updateStickyOffsets() {
+    try {
+        const headerEl = document.querySelector('header');
+        const tabsEl = document.querySelector('.tabs');
+        const root = document.documentElement;
+        const headerH = headerEl ? Math.ceil(headerEl.getBoundingClientRect().height) : 0;
+        const tabsH = tabsEl ? Math.ceil(tabsEl.getBoundingClientRect().height) : 0;
+        const tabsStyles = tabsEl ? getComputedStyle(tabsEl) : null;
+        const tabsGap = tabsStyles ? Math.ceil(parseFloat(tabsStyles.marginBottom || '0')) : 0;
+        const safety = 6; // small breathing room to avoid any visual overlap
+        if (headerH) root.style.setProperty('--header-height', headerH + 'px');
+        if (tabsH) root.style.setProperty('--tabs-height', tabsH + 'px');
+        // Convenience var used by some selectors
+        root.style.setProperty('--thead-top-offset', `calc(var(--header-height, ${headerH}px) + var(--tabs-height, ${tabsH}px) + ${tabsGap + safety}px)`);
+    } catch (e) {
+        // no-op
+    }
+}
+
+// Run once DOM is ready and on resize/font/layout changes
+window.addEventListener('DOMContentLoaded', () => {
+    // Run soon after layout paints to capture accurate sizes
+    requestAnimationFrame(() => { updateStickyOffsets(); });
+    // Resize listener
+    window.addEventListener('resize', () => updateStickyOffsets());
+    // Observe header/tabs for size changes (e.g., responsive wrapping)
+    try {
+        const ro = new ResizeObserver(() => updateStickyOffsets());
+        const headerEl = document.querySelector('header');
+        const tabsEl = document.querySelector('.tabs');
+        if (headerEl) ro.observe(headerEl);
+        if (tabsEl) ro.observe(tabsEl);
+    } catch {}
+});
+
 // Charts: Render summary charts for each tab
 function renderTabCharts(tab, columns, data) {
     const section = document.getElementById(tab);

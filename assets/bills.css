@@ -53,7 +53,7 @@
 .bills-charts { display:flex; gap:1rem; margin-bottom:1rem; }
 .bills-charts canvas { background:var(--bg-700,#23232a); border-radius:12px; padding:0.5rem; max-width:380px; max-height:220px; }
 
-.bills-list-view { width:100%; overflow:auto; }
+.bills-list-view { width:100%; overflow: visible; }
 
 /* Table layout */
 .bills-table { width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; background:var(--bg-700,#23232a); border-radius:12px; }
