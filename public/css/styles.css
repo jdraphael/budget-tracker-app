@@ -342,6 +342,66 @@ thead {
     letter-spacing: 0.02em;
     border-bottom: 1px solid var(--border);
 }
+.bills-table .muted-date { color: var(--fg-400); }
+
+/* Bills actions column */
+.bills-actions { text-align: right; white-space: nowrap; }
+.bills-action-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--fg-200);
+    border-radius: 6px;
+    padding: 0.25rem 0.45rem;
+    margin-left: 0.25rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+.bills-action-btn:hover { background: var(--bg-600); color: var(--fg-100); }
+
+/* Bills modal (view-only) */
+.bills-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+}
+.bills-modal-overlay.hidden { display: none; }
+.bills-modal {
+    background: var(--bg-800);
+    color: var(--fg-100);
+    width: min(760px, 92vw);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+}
+.bills-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+}
+.bills-modal-close {
+    background: transparent;
+    border: none;
+    color: var(--fg-300);
+    font-size: 1.4rem;
+    cursor: pointer;
+}
+.bills-modal-content { padding: 1rem 1.2rem 1.2rem; }
+.bills-modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem 1rem;
+}
+.bills-modal-field { display: contents; }
+.bills-modal-label { color: var(--fg-400); text-align: right; padding-right: 0.5rem; }
+.bills-modal-value { color: var(--fg-100); }
+.bills-modal-notes { grid-column: 1 / -1; color: var(--fg-200); white-space: pre-wrap; background: var(--bg-700); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; }
+.bills-modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; }
 .bills-table td {
     position: relative;
     font-size: 1rem;
@@ -590,6 +650,21 @@ footer {
 
 .export-banner.hidden {
     display: none;
+}
+
+/* Export banner timed progress */
+.export-banner .export-progress {
+    flex: 1 1 180px;
+    max-width: 320px;
+    height: 8px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 999px;
+    overflow: hidden;
+}
+.export-banner .export-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: rgba(255,255,255,0.9);
 }
 
 @media (max-width: 900px) {

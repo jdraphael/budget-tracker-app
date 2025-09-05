@@ -268,10 +268,83 @@
     <!-- Export Banner -->
     <div id="export-banner" class="export-banner hidden">
         <div>
-            <strong>Remember to Export Your Data!</strong> 
+            <strong>Remember to Export Your Data!</strong>
             <span>Your changes are not saved to CSV files yet.</span>
         </div>
+        <div class="export-progress" aria-hidden="true"><div class="export-progress-bar"></div></div>
         <button class="btn btn-sm">Export Now</button>
+    </div>
+
+    <!-- Bills: View-Only Details Modal -->
+    <div id="bills-modal-overlay" class="bills-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="bills-modal-title">
+        <div class="bills-modal" role="document">
+            <div class="bills-modal-header">
+                <h3 id="bills-modal-title">Bill Details</h3>
+                <button id="bills-modal-close" class="bills-modal-close" aria-label="Close">×</button>
+            </div>
+            <div class="bills-modal-content">
+                <div id="bills-modal-fields" class="bills-modal-grid"></div>
+                <div class="bills-modal-actions">
+                    <button id="bills-modal-cancel" class="btn btn-sm btn-outline" aria-label="Close">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bills: Edit Modal (inputs enabled) -->
+    <div id="bills-edit-modal" class="bills-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="bills-edit-modal-title">
+        <div class="bills-modal" role="document">
+            <div class="bills-modal-header">
+                <h3 id="bills-edit-modal-title">Edit Bill</h3>
+                <button id="bills-edit-close" class="bills-modal-close" aria-label="Close">×</button>
+            </div>
+            <div class="bills-modal-content">
+                <form id="bills-edit-form" class="bills-modal-grid">
+                    <!-- two-column layout -->
+                    <label class="bills-modal-label" for="bills-edit-name">Bill Name</label>
+                    <input id="bills-edit-name" class="bills-modal-value" required />
+
+                    <label class="bills-modal-label" for="bills-edit-category">Category</label>
+                    <input id="bills-edit-category" class="bills-modal-value" />
+
+                    <label class="bills-modal-label" for="bills-edit-amount">Amount</label>
+                    <input id="bills-edit-amount" type="number" step="0.01" min="0" class="bills-modal-value" />
+
+                    <label class="bills-modal-label" for="bills-edit-status">Status</label>
+                    <select id="bills-edit-status" class="bills-modal-value">
+                        <option>Pending</option>
+                        <option>Paid</option>
+                        <option>Overdue</option>
+                        <option>Auto-Paid</option>
+                    </select>
+
+                    <label class="bills-modal-label" for="bills-edit-due">Due Date</label>
+                    <input id="bills-edit-due" type="date" class="bills-modal-value" />
+
+                    <label class="bills-modal-label" for="bills-edit-paid">Paid Date</label>
+                    <input id="bills-edit-paid" type="date" class="bills-modal-value" />
+
+                    <label class="bills-modal-label" for="bills-edit-recurring">Recurring</label>
+                    <div class="bills-modal-value"><input id="bills-edit-recurring" type="checkbox" /> <label for="bills-edit-recurring" style="color:var(--fg-300);margin-left:0.25rem">Yes</label></div>
+
+                    <label class="bills-modal-label" for="bills-edit-frequency">Frequency</label>
+                    <input id="bills-edit-frequency" class="bills-modal-value" placeholder="Monthly, Quarterly, Annually, Weekly" />
+
+                    <label class="bills-modal-label" for="bills-edit-method">Payment Method</label>
+                    <input id="bills-edit-method" class="bills-modal-value" />
+
+                    <label class="bills-modal-label" for="bills-edit-id">Bill ID</label>
+                    <input id="bills-edit-id" class="bills-modal-value" readonly />
+
+                    <div class="bills-modal-label">Notes</div>
+                    <textarea id="bills-edit-notes" class="bills-modal-notes" rows="4"></textarea>
+                </form>
+                <div class="bills-modal-actions">
+                    <button id="bills-edit-save" class="btn btn-sm" aria-label="Save Bill">Save</button>
+                    <button id="bills-edit-cancel" class="btn btn-sm btn-outline" aria-label="Cancel Edit">Cancel</button>
+                </div>
+            </div>
+        </div>
     </div>
     <!-- Footer -->
     <footer>
@@ -279,17 +352,17 @@
     </footer>
     
     <!-- Inline CSV fallbacks for offline/file:// usage -->
-    <script type="text/csv" id="seed-bills-csv">id,name,amount,recurrence,start_date,end_date,status
-1,Rent,1200.00,Monthly,2025-01-01,,Active
-2,Electricity,150.00,Monthly,2025-01-01,,Active
-3,Internet,80.00,Monthly,2025-01-01,,Active
-4,Water,50.00,Monthly,2025-01-01,,Active
-5,Car Insurance,120.00,Monthly,2025-01-01,,Active
-6,Gas,60.00,Monthly,2025-01-01,,Active
-7,Groceries,400.00,Monthly,2025-01-01,,Active
-8,Phone,70.00,Monthly,2025-01-01,,Active
-9,Credit Card,200.00,Monthly,2025-01-01,,Active
-10,Netflix,15.99,Monthly,2025-01-01,,Active</script>
+    <script type="text/csv" id="seed-bills-csv">Bill_ID,Bill_Name,Category,Amount_Due,Due_Date,Paid_Date,Status,Recurring,Frequency,Payment_Method,Notes
+1001,Rent,Housing,1200.00,2025-09-01,2025-09-01,Paid,true,Monthly,AutoPay Checking,Monthly rent for apartment
+1002,Electricity,Utilities,148.62,2025-09-10,,Pending,true,Monthly,Credit Card,Based on last month's usage
+1003,Internet,Utilities,79.99,2025-09-05,,Overdue,true,Monthly,Credit Card,Fiber 1Gb plan
+1004,Water,Utilities,52.30,2025-09-12,,Pending,true,Monthly,ACH,City water bill
+1005,Car Insurance,Transportation,118.50,2025-09-20,,Pending,true,Monthly,AutoPay Checking,6-month policy installment
+1006,Phone,Utilities,68.00,2025-09-15,,Pending,true,Monthly,Credit Card,Mobile phone plan
+1007,Credit Card Payment,Debt,250.00,2025-09-08,,Overdue,false,,ACH,Minimum due from statement 2025-08
+1008,Netflix,Personal,15.99,2025-09-02,2025-09-02,Auto-Paid,true,Monthly,Credit Card,Streaming subscription
+1009,Trash,Utilities,22.00,2025-09-07,,Overdue,true,Monthly,ACH,Quarterly service billed monthly
+1010,HOA Dues,Housing,180.00,2025-09-03,2025-09-04,Paid,true,Monthly,ACH,Community association fees</script>
 
     <script type="text/csv" id="seed-income-csv">id,source,amount,date,recurrence,status
 1,Salary,3500.00,2025-01-01,Monthly,Received

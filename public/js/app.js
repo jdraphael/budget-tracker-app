@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Ensure initial tab is visible
     switchTab(state.activeTab || 'dashboard');
     if (!('showDirectoryPicker' in window)) {
-        document.getElementById('export-banner').classList.remove('hidden');
+        try { showExportBannerTimed(5000); } catch { const el = document.getElementById('export-banner'); if (el) el.classList.remove('hidden'); }
     }
 });
 
@@ -395,14 +395,13 @@ function filterToCurrentMonth(tab, data) {
     const monthStart = DateTime.fromFormat(ym + '-01', 'yyyy-MM-dd');
     const monthEnd = monthStart.endOf('month');
     if (tab === 'bills') {
+        // New schema: filter by Due_Date or Paid_Date falling in current month
         return data.filter(item => {
-            const start = item.start_date ? DateTime.fromISO(String(item.start_date)) : null;
-            const end = item.end_date ? DateTime.fromISO(String(item.end_date)) : null;
-            if (!start || !start.isValid) return false;
-            const startsBeforeOrInMonth = start <= monthEnd;
-            const endsAfterOrOpen = !end || (end.isValid && end >= monthStart);
-            const notInactive = String(item.status || '').toLowerCase() !== 'inactive';
-            return startsBeforeOrInMonth && endsAfterOrOpen && notInactive;
+            const due = item.Due_Date ? DateTime.fromISO(String(item.Due_Date)) : null;
+            const paid = item.Paid_Date ? DateTime.fromISO(String(item.Paid_Date)) : null;
+            const inDue = due && due.isValid && due >= monthStart && due <= monthEnd;
+            const inPaid = paid && paid.isValid && paid >= monthStart && paid <= monthEnd;
+            return Boolean(inDue || inPaid);
         });
     }
     if (tab === 'income' || tab === 'transactions') {
@@ -1065,91 +1064,127 @@ function updateDashboardKPIs() {
     }
 }
 
-// Add this function to render bills in the Bills tab
-function renderBillsList(sortKey = 'name', sortDir = 'asc') {
+// Add this function to render bills in the Bills tab using the new schema
+function renderBillsList() {
     const billsSection = document.getElementById('bills');
-    
-    console.log("Creating initial bills table");
-    
+
     // Clean up any existing content first except for the action bar
-    // Find all child elements that are not the action-bar and remove them
     Array.from(billsSection.children).forEach(child => {
         if (!child.classList.contains('action-bar')) {
             child.remove();
         }
     });
-    
+
+    const bills = [...(state.data.bills || [])];
+    // Sort: overdue first, then by upcoming due date
+    const today = DateTime.now();
+    const toDT = (s) => { const d = s ? DateTime.fromISO(String(s)) : null; return d && d.isValid ? d : null; };
+    const isOverdue = (b) => {
+        const status = String(b.Status || '').toLowerCase();
+        if (status === 'overdue') return true;
+        if (status === 'paid' || status === 'auto-paid') return false;
+        const due = toDT(b.Due_Date);
+        return !!(due && due < today);
+    };
+    bills.sort((a, b) => {
+        const ao = isOverdue(a) ? 0 : 1;
+        const bo = isOverdue(b) ? 0 : 1;
+        if (ao !== bo) return ao - bo; // overdue first
+        const ad = toDT(a.Due_Date);
+        const bd = toDT(b.Due_Date);
+        if (ad && bd) return ad - bd;
+        if (ad) return -1; if (bd) return 1;
+        return String(a.Bill_Name||'').localeCompare(String(b.Bill_Name||''));
+    });
+
     // Create a fresh table container
     const billsTable = document.createElement('div');
     billsTable.className = 'table-container bills-table';
     billsSection.appendChild(billsTable);
-    
-    // Sort bills
-    let bills = [...state.data.bills];
-    bills.sort((a, b) => {
-        if (sortKey === 'amount') {
-            return sortDir === 'asc' ? a.amount - b.amount : b.amount - a.amount;
-        } else {
-            return sortDir === 'asc' ? String(a[sortKey]).localeCompare(String(b[sortKey])) : String(b[sortKey]).localeCompare(String(a[sortKey]));
-        }
-    });
-    
-    // Use simple innerHTML approach for consistency across environments
+
+    // Details panel
+    const details = document.createElement('div');
+    details.id = 'bills-details';
+    details.className = 'card';
+    details.style = 'padding:1rem; margin-top:0.5rem; display:none;';
+
+    // Render table + actions header
     let html = `<table><thead><tr>
-        <th data-sort="name">Name</th>
-        <th data-sort="amount">Amount</th>
-        <th data-sort="recurrence">Recurrence</th>
-        <th data-sort="start_date">Start</th>
-        <th data-sort="end_date">End</th>
-        <th data-sort="status">Status</th>
-        <th>Actions</th>
+        <th>Bill Name</th>
+        <th>Category</th>
+        <th>Amount</th>
+        <th>Due/Paid</th>
+        <th>Status</th>
+        <th>Payment Method</th>
+        <th style="text-align:right;">Quick Actions</th>
     </tr></thead><tbody>`;
-    
-    if (bills.length === 0) {
-        html += `<tr><td colspan='7' style='text-align:center;color:var(--fg-300);'>No bills added yet.</td></tr>`;
+
+    if (!bills.length) {
+        html += `<tr><td colspan='6' style='text-align:center;color:var(--fg-300);'>No bills found.</td></tr>`;
     } else {
-        for (const bill of bills) {
-            html += `<tr data-id="${bill.id}">
-                <td>${bill.name || '-'}</td>
-                <td>${formatCurrency(Number(bill.amount) || 0)}</td>
-                <td>${bill.recurrence || '-'}</td>
-                <td>${bill.start_date || '-'}</td>
-                <td>${bill.end_date || '-'}</td>
-                <td>${bill.status || 'Unknown'}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline edit-bill">Edit</button>
-                    <button class="btn btn-sm btn-outline delete-bill">Delete</button>
+        for (const b of bills) {
+            const recurring = String(b.Recurring || '').toLowerCase() === 'true';
+            const status = String(b.Status || '').trim();
+            const overdue = isOverdue(b);
+            const rowCls = overdue ? 'overdue' : '';
+            const amount = formatCurrency(Number(b.Amount_Due) || 0);
+            const showPaid = /^paid$/i.test(status) && b.Paid_Date;
+            const dateText = showPaid ? b.Paid_Date : (b.Due_Date || '-');
+            const dateCls = showPaid ? "style='color:var(--fg-400)'" : '';
+            const statusBadge = overdue ? `<span class='badge badge-overdue'>Overdue</span>` : `<span class='badge'>${status || 'Pending'}</span>`;
+            html += `<tr class='${rowCls}' data-id='${b.Bill_ID}'>
+                <td>${recurring ? "<span class='badge badge-recurring' title='Recurring'>↻</span> " : ''}${escapeHtml(String(b.Bill_Name || ''))}</td>
+                <td>${escapeHtml(String(b.Category || ''))}</td>
+                <td>${amount}</td>
+                <td ${dateCls}>${dateText}</td>
+                <td>${statusBadge}</td>
+                <td>${escapeHtml(String(b.Payment_Method || ''))}</td>
+                <td class='bills-actions'>
+                    <button class='bills-action-btn' data-action='mark-paid' title='Mark Paid' aria-label='Mark Paid'>✓</button>
+                    <button class='bills-action-btn' data-action='mark-unpaid' title='Mark Unpaid' aria-label='Mark Unpaid'>↺</button>
+                    <button class='bills-action-btn' data-action='toggle-autopaid' title='Toggle Auto-Paid' aria-label='Toggle Auto-Paid'>⟳</button>
+                    <button class='bills-action-btn' data-action='edit' title='Edit' aria-label='Edit'>✎</button>
+                    <button class='bills-action-btn' data-action='delete' title='Delete' aria-label='Delete'>🗑</button>
+                    <button class='bills-action-btn' data-action='copy' title='Copy summary' aria-label='Copy summary'>📋</button>
                 </td>
             </tr>`;
         }
     }
     html += `</tbody></table>`;
     billsTable.innerHTML = html;
-    
-    // Add sorting event listeners
-    billsTable.querySelectorAll('th[data-sort]').forEach(th => {
-        th.style.cursor = 'pointer';
-        th.onclick = () => {
-            let newDir = sortDir === 'asc' ? 'desc' : 'asc';
-            renderBillsList(th.getAttribute('data-sort'), newDir);
-        };
+    billsSection.appendChild(details);
+
+    // Delegated dblclick for opening modal (ignore action buttons)
+    billsTable.addEventListener('dblclick', (e) => {
+        const inActions = e.target.closest('.bills-actions');
+        const btn = e.target.closest('.bills-action-btn');
+        if (inActions || btn) return; // don't open modal from action clicks
+        const tr = e.target.closest('tr[data-id]');
+        if (!tr) return;
+        const id = tr.getAttribute('data-id');
+        const bill = (state.data.bills || []).find(x => String(x.Bill_ID) === String(id));
+        if (!bill) return;
+        openBillsModal(bill, tr);
     });
-    
-    // Add edit/delete event listeners
-    billsTable.querySelectorAll('.edit-bill').forEach(btn => {
-        btn.onclick = function() {
-            const id = this.closest('tr').getAttribute('data-id');
-            openEditBillModal(id);
-        };
+
+    // Delegated click for quick actions
+    billsTable.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.bills-action-btn');
+        if (!btn) return;
+        e.stopPropagation(); // prevent row dblclick from seeing these clicks
+        const tr = btn.closest('tr[data-id]');
+        const id = tr && tr.getAttribute('data-id');
+        if (!id) return;
+        const action = btn.getAttribute('data-action');
+        if (action === 'mark-paid') await billsActionMarkPaid(id);
+        else if (action === 'mark-unpaid') await billsActionMarkUnpaid(id);
+        else if (action === 'toggle-autopaid') await billsActionToggleAutoPaid(id);
+        else if (action === 'edit') await billsActionEdit(id, tr);
+        else if (action === 'delete') await billsActionDelete(id);
+        else if (action === 'copy') await billsActionCopy(id);
     });
-    billsTable.querySelectorAll('.delete-bill').forEach(btn => {
-        btn.onclick = function() {
-            const id = this.closest('tr').getAttribute('data-id');
-            deleteBill(id);
-        };
-    });
-    
-    // Update sticky offsets now and shortly after render to ensure CSS var is correct
+
+    // Update sticky offsets now and after render
     updateStickyOffsets();
     setTimeout(updateStickyOffsets, 100);
 }
@@ -1181,9 +1216,22 @@ async function saveBillsToCSV() {
     if (state.uiState.folderHandle) {
         try {
             const fileHandle = await state.uiState.folderHandle.getFileHandle('bills.csv', { create: true });
-            let csv = 'id,name,amount,recurrence,start_date,end_date,status\n';
-            for (const bill of state.data.bills) {
-                csv += `${bill.id},${bill.name},${bill.amount},${bill.recurrence},${bill.start_date},${bill.end_date},${bill.status}\n`;
+            let csv = 'Bill_ID,Bill_Name,Category,Amount_Due,Due_Date,Paid_Date,Status,Recurring,Frequency,Payment_Method,Notes\n';
+            for (const b of (state.data.bills || [])) {
+                const row = [
+                    b.Bill_ID ?? '',
+                    b.Bill_Name ?? '',
+                    b.Category ?? '',
+                    b.Amount_Due ?? '',
+                    b.Due_Date ?? '',
+                    b.Paid_Date ?? '',
+                    b.Status ?? '',
+                    b.Recurring ?? '',
+                    b.Frequency ?? '',
+                    b.Payment_Method ?? '',
+                    (b.Notes ?? '').toString().replace(/\n/g,' ')
+                ];
+                csv += row.join(',') + '\n';
             }
             const writable = await fileHandle.createWritable();
             await writable.write(csv);
@@ -1200,6 +1248,73 @@ function saveUIPreferences() {
         currentMonth: state.currentMonth
     };
     localStorage.setItem('budgetAppUIPrefs', JSON.stringify(preferences));
+}
+
+// Persist transactions if a data folder is selected; otherwise keep in-memory
+async function saveTransactionsToCSV() {
+    if (state.uiState.folderHandle) {
+        try {
+            const fileHandle = await state.uiState.folderHandle.getFileHandle('transactions.csv', { create: true });
+            let csv = 'id,date,description,category,amount,status\n';
+            for (const t of state.data.transactions) {
+                csv += `${t.id},${t.date},${t.description},${t.category},${t.amount},${t.status}\n`;
+            }
+            const writable = await fileHandle.createWritable();
+            await writable.write(csv);
+            await writable.close();
+        } catch (err) {
+            alert('Failed to save transactions to CSV.');
+        }
+    } else {
+        // Show export banner to hint at persisting changes
+        try { showExportBannerTimed(5000); } catch { const banner = document.getElementById('export-banner'); if (banner) banner.classList.remove('hidden'); }
+    }
+}
+
+// Mark a bill as paid for the current month and handle recurrence
+async function markBillPaid(id) {
+    const bill = (state.data.bills || []).find(b => String(b.Bill_ID ?? b.id) === String(id));
+    if (!bill) return;
+    const ym = state.currentMonth;
+    const monthStart = DateTime.fromFormat(ym + '-01', 'yyyy-MM-dd');
+    const todayIso = DateTime.now().toISODate();
+    const tx = {
+        id: Date.now(),
+        date: monthStart.toISODate(),
+        description: bill.Bill_Name || bill.name,
+        category: 'Bills',
+        amount: -Math.abs(Number(bill.Amount_Due ?? bill.amount ?? 0) || 0),
+        status: 'Paid'
+    };
+    state.data.transactions = state.data.transactions || [];
+    state.data.transactions.push(tx);
+    await saveTransactionsToCSV();
+
+    // Update bill status/date per new schema
+    bill.Status = 'Paid';
+    bill.Paid_Date = todayIso;
+    await saveBillsToCSV();
+
+    // If recurring monthly, ask whether to create a pending placeholder for next month
+    const isMonthly = /^monthly$/i.test(String(bill.Frequency || bill.recurrence || '')) && String(bill.Recurring || 'false').toLowerCase() === 'true';
+    if (isMonthly) {
+        const ok = confirm('Create a pending entry for next month?');
+        if (ok) {
+            const nextMonth = monthStart.plus({ months: 1 });
+            state.data.transactions.push({
+                id: Date.now() + 1,
+                date: nextMonth.toISODate(),
+                description: bill.Bill_Name || bill.name,
+                category: 'Bills',
+                amount: -Math.abs(Number(bill.Amount_Due ?? bill.amount ?? 0) || 0),
+                status: 'Pending'
+            });
+            await saveTransactionsToCSV();
+        }
+    }
+
+    // Re-render unpaid list; this bill should now disappear for this month
+    renderBillsList();
 }
 
 // Expose to global so tabNavigation can persist active tab
@@ -1410,6 +1525,257 @@ function initializeUI() {
         if (header) observer.observe(header, { childList: true, subtree: true, attributes: true });
         if (tabs) observer.observe(tabs, { childList: true, subtree: true, attributes: true });
     } catch {}
+}
+
+// Show the export banner for a limited time with a progress bar
+function showExportBannerTimed(durationMs = 5000) {
+    const el = document.getElementById('export-banner');
+    if (!el) return;
+    // ensure progress elements
+    let bar = el.querySelector('.export-progress-bar');
+    if (!bar) {
+        const prog = document.createElement('div');
+        prog.className = 'export-progress';
+        bar = document.createElement('div');
+        bar.className = 'export-progress-bar';
+        prog.appendChild(bar);
+        el.insertBefore(prog, el.querySelector('button'));
+    }
+    // cancel any existing timer
+    if (!state.uiState) state.uiState = {};
+    if (state.uiState._exportHideTimer) {
+        clearTimeout(state.uiState._exportHideTimer);
+        state.uiState._exportHideTimer = null;
+    }
+    // reset and show
+    el.classList.remove('hidden');
+    bar.style.transition = 'none';
+    bar.style.width = '0%';
+    // force reflow before starting transition
+    void bar.offsetWidth;
+    bar.style.transition = `width ${durationMs}ms linear`;
+    bar.style.width = '100%';
+    // schedule hide
+    state.uiState._exportHideTimer = setTimeout(() => {
+        el.classList.add('hidden');
+        // reset progress for next time
+        bar.style.transition = 'none';
+        bar.style.width = '0%';
+        state.uiState._exportHideTimer = null;
+    }, durationMs);
+}
+
+// ===== Bills Modal + Actions =====
+let __billsModalPrevFocus = null;
+function openBillsModal(bill, rowEl) {
+    const overlay = document.getElementById('bills-modal-overlay');
+    const titleEl = document.getElementById('bills-modal-title');
+    const fields = document.getElementById('bills-modal-fields');
+    const btnClose = document.getElementById('bills-modal-close');
+    const btnCancel = document.getElementById('bills-modal-cancel');
+    if (!overlay || !fields) return;
+    __billsModalPrevFocus = rowEl || document.activeElement;
+    titleEl.textContent = 'Bill Details - ' + (bill.Bill_Name || '');
+    const fmt = (n) => formatCurrency(Number(n) || 0);
+    const status = String(bill.Status || '').trim();
+    const isPaid = /^paid$/i.test(status);
+    const dueLabel = isPaid ? 'Paid Date' : 'Due Date';
+    const dateVal = isPaid ? (bill.Paid_Date || '-') : (bill.Due_Date || '-');
+    const overdueDays = computeOverdueDays(bill);
+    const recurringYesNo = String(bill.Recurring || '').toLowerCase() === 'true' ? 'Yes' : 'No';
+    const badge = isPaid ? `<span class='badge badge-active'>Paid</span>` : (status.toLowerCase()==='overdue' ? `<span class='badge badge-overdue'>Overdue</span>` : `<span class='badge'>${status||'Pending'}</span>`);
+    fields.innerHTML = `
+        <div class='bills-modal-field'><div class='bills-modal-label'>Bill Name</div><div class='bills-modal-value'>${escapeHtml(String(bill.Bill_Name||''))}</div></div>
+        <div class='bills-modal-field'><div class='bills-modal-label'>Category</div><div class='bills-modal-value'>${escapeHtml(String(bill.Category||''))}</div></div>
+        <div class='bills-modal-field'><div class='bills-modal-label'>Amount</div><div class='bills-modal-value'>${fmt(bill.Amount_Due)}</div></div>
+        <div class='bills-modal-field'><div class='bills-modal-label'>Status</div><div class='bills-modal-value'>${badge}</div></div>
+        <div class='bills-modal-field'><div class='bills-modal-label'>${dueLabel}</div><div class='bills-modal-value'>${escapeHtml(String(dateVal||'-'))}</div></div>
+        <div class='bills-modal-field'><div class='bills-modal-label'>Overdue Days</div><div class='bills-modal-value'>${overdueDays ?? '—'}</div></div>
+        <div class='bills-modal-field'><div class='bills-modal-label'>Recurring</div><div class='bills-modal-value'>${recurringYesNo}${bill.Frequency? ' ('+escapeHtml(String(bill.Frequency))+')':''}</div></div>
+        <div class='bills-modal-field'><div class='bills-modal-label'>Payment Method</div><div class='bills-modal-value'>${escapeHtml(String(bill.Payment_Method||''))}</div></div>
+        <div class='bills-modal-field'><div class='bills-modal-label'>Bill ID</div><div class='bills-modal-value'>${escapeHtml(String(bill.Bill_ID||''))}</div></div>
+        <div class='bills-modal-notes'>${escapeHtml(String(bill.Notes||'')) || '<em style="color:var(--fg-400)">No notes</em>'}</div>
+    `;
+    // Wire controls
+    const close = () => closeBillsModal();
+    btnClose.onclick = close;
+    btnCancel.onclick = close;
+    overlay.onclick = (e) => { if (e.target === overlay) close(); };
+    // Open and focus trap
+    overlay.classList.remove('hidden');
+    const focusables = overlay.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    const first = focusables[0]; const last = focusables[focusables.length-1];
+    if (first) first.focus();
+    overlay.onkeydown = (e) => {
+        if (e.key === 'Escape') { e.preventDefault(); close(); }
+        if (e.key === 'Tab') {
+            if (!focusables.length) return;
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+    };
+}
+
+function closeBillsModal() {
+    const overlay = document.getElementById('bills-modal-overlay');
+    if (!overlay) return;
+    overlay.classList.add('hidden');
+    overlay.onkeydown = null;
+    if (__billsModalPrevFocus && __billsModalPrevFocus.focus) {
+        try { __billsModalPrevFocus.focus(); } catch {}
+    }
+}
+
+function computeOverdueDays(bill) {
+    const status = String(bill.Status || '').toLowerCase();
+    if (status !== 'overdue') return '—';
+    const d = DateTime.fromISO(String(bill.Due_Date||''));
+    if (!d.isValid) return '—';
+    const diff = DateTime.now().startOf('day').diff(d.startOf('day'), 'days').days;
+    return Math.max(0, Math.floor(diff));
+}
+
+async function billsActionMarkPaid(id) {
+    const b = (state.data.bills || []).find(x => String(x.Bill_ID) === String(id));
+    if (!b) return;
+    b.Status = 'Paid';
+    b.Paid_Date = DateTime.now().toISODate();
+    if (typeof saveBillsToCSV === 'function') await saveBillsToCSV();
+    renderBillsList();
+}
+async function billsActionMarkUnpaid(id) {
+    const b = (state.data.bills || []).find(x => String(x.Bill_ID) === String(id));
+    if (!b) return;
+    b.Status = 'Pending';
+    b.Paid_Date = '';
+    if (typeof saveBillsToCSV === 'function') await saveBillsToCSV();
+    renderBillsList();
+}
+async function billsActionToggleAutoPaid(id) {
+    const b = (state.data.bills || []).find(x => String(x.Bill_ID) === String(id));
+    if (!b) return;
+    b.Status = (String(b.Status||'').toLowerCase()==='auto-paid') ? 'Pending' : 'Auto-Paid';
+    if (typeof saveBillsToCSV === 'function') await saveBillsToCSV();
+    renderBillsList();
+}
+async function billsActionEdit(id, rowEl) {
+    // If details modal is open, close it first
+    const detailsOverlay = document.getElementById('bills-modal-overlay');
+    if (detailsOverlay && !detailsOverlay.classList.contains('hidden')) closeBillsModal();
+    const bill = (state.data.bills || []).find(x => String(x.Bill_ID) === String(id));
+    if (!bill) return;
+    if (typeof openEditBill === 'function') {
+        // Delegate to app-provided edit flow
+        return openEditBill(String(id));
+    }
+    // Use our edit modal
+    openBillsEditModal(bill, rowEl);
+}
+async function billsActionDelete(id) {
+    if (typeof deleteBill === 'function') return deleteBill(String(id));
+    // UI fallback
+    state.data.bills = (state.data.bills || []).filter(x => String(x.Bill_ID) !== String(id));
+    if (typeof saveBillsToCSV === 'function') await saveBillsToCSV();
+    renderBillsList();
+    console.warn('TODO: Persist deletion for Bills in CSV if needed.');
+}
+async function billsActionCopy(id) {
+    const b = (state.data.bills || []).find(x => String(x.Bill_ID) === String(id));
+    if (!b) return;
+    const lines = [
+        `Bill: ${b.Bill_Name}`,
+        `Category: ${b.Category}`,
+        `Amount: ${formatCurrency(Number(b.Amount_Due)||0)}`,
+        `Status: ${b.Status}`,
+        `Due Date: ${b.Due_Date || '-'}`,
+        `Paid Date: ${b.Paid_Date || '-'}`,
+        `Recurring: ${String(b.Recurring).toLowerCase()==='true' ? 'Yes' : 'No'}${b.Frequency? ' ('+b.Frequency+')':''}`,
+        `Payment Method: ${b.Payment_Method || '-'}`,
+        `Bill ID: ${b.Bill_ID}`,
+        `Notes: ${b.Notes || ''}`
+    ];
+    const text = lines.join('\n');
+    try {
+        await navigator.clipboard.writeText(text);
+    } catch {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); } catch {}
+        document.body.removeChild(ta);
+    }
+}
+
+// Edit Modal (local implementation)
+let __billsEditPrevFocus = null;
+function openBillsEditModal(bill, rowEl) {
+    const overlay = document.getElementById('bills-edit-modal');
+    if (!overlay) return;
+    __billsEditPrevFocus = rowEl || document.activeElement;
+    // populate inputs
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+    set('bills-edit-name', bill.Bill_Name);
+    set('bills-edit-category', bill.Category);
+    set('bills-edit-amount', bill.Amount_Due);
+    set('bills-edit-status', bill.Status || 'Pending');
+    set('bills-edit-due', bill.Due_Date);
+    set('bills-edit-paid', bill.Paid_Date);
+    const chk = document.getElementById('bills-edit-recurring'); if (chk) chk.checked = String(bill.Recurring||'').toLowerCase()==='true';
+    set('bills-edit-frequency', bill.Frequency);
+    set('bills-edit-method', bill.Payment_Method);
+    set('bills-edit-id', bill.Bill_ID);
+    const notes = document.getElementById('bills-edit-notes'); if (notes) notes.value = bill.Notes || '';
+
+    // wire actions
+    const btnClose = document.getElementById('bills-edit-close');
+    const btnCancel = document.getElementById('bills-edit-cancel');
+    const btnSave = document.getElementById('bills-edit-save');
+    const form = document.getElementById('bills-edit-form');
+    const close = () => closeBillsEditModal();
+    btnClose.onclick = close;
+    btnCancel.onclick = (e) => { e.preventDefault(); close(); };
+    btnSave.onclick = async (e) => { e.preventDefault(); await saveBillsEditModal(bill); };
+    overlay.onclick = (e) => { if (e.target === overlay) close(); };
+
+    // open + focus trap
+    overlay.classList.remove('hidden');
+    const focusables = overlay.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    const first = focusables[0]; const last = focusables[focusables.length-1];
+    if (first) first.focus();
+    overlay.onkeydown = (e) => {
+        if (e.key === 'Escape') { e.preventDefault(); close(); }
+        if (e.key === 'Tab') {
+            if (!focusables.length) return;
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+    };
+}
+
+function closeBillsEditModal() {
+    const overlay = document.getElementById('bills-edit-modal');
+    if (!overlay) return;
+    overlay.classList.add('hidden');
+    overlay.onkeydown = null;
+    if (__billsEditPrevFocus && __billsEditPrevFocus.focus) {
+        try { __billsEditPrevFocus.focus(); } catch {}
+    }
+}
+
+async function saveBillsEditModal(bill) {
+    const get = (id) => document.getElementById(id);
+    bill.Bill_Name = get('bills-edit-name').value.trim();
+    bill.Category = get('bills-edit-category').value.trim();
+    bill.Amount_Due = parseFloat(get('bills-edit-amount').value || '0') || 0;
+    bill.Status = get('bills-edit-status').value;
+    bill.Due_Date = get('bills-edit-due').value;
+    bill.Paid_Date = get('bills-edit-paid').value;
+    bill.Recurring = get('bills-edit-recurring').checked ? 'true' : 'false';
+    bill.Frequency = get('bills-edit-frequency').value.trim();
+    bill.Payment_Method = get('bills-edit-method').value.trim();
+    bill.Notes = get('bills-edit-notes').value;
+    if (typeof saveBillsToCSV === 'function') await saveBillsToCSV();
+    renderBillsList();
+    closeBillsEditModal();
 }
 
 // Run initialization on page load

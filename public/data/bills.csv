@@ -1,11 +1,11 @@
-id,name,amount,recurrence,start_date,end_date,status
-1,Rent,1200.00,Monthly,2025-01-01,,Active
-2,Electricity,150.00,Monthly,2025-01-01,,Active
-3,Internet,80.00,Monthly,2025-01-01,,Active
-4,Water,50.00,Monthly,2025-01-01,,Active
-5,Car Insurance,120.00,Monthly,2025-01-01,,Active
-6,Gas,60.00,Monthly,2025-01-01,,Active
-7,Groceries,400.00,Monthly,2025-01-01,,Active
-8,Phone,70.00,Monthly,2025-01-01,,Active
-9,Credit Card,200.00,Monthly,2025-01-01,,Active
-10,Netflix,15.99,Monthly,2025-01-01,,Active
+Bill_ID,Bill_Name,Category,Amount_Due,Due_Date,Paid_Date,Status,Recurring,Frequency,Payment_Method,Notes
+1001,Rent,Housing,1200.00,2025-09-01,2025-09-01,Paid,true,Monthly,AutoPay Checking,Monthly rent for apartment
+1002,Electricity,Utilities,148.62,2025-09-10,,Pending,true,Monthly,Credit Card,Based on last month's usage
+1003,Internet,Utilities,79.99,2025-09-05,,Overdue,true,Monthly,Credit Card,Fiber 1Gb plan
+1004,Water,Utilities,52.30,2025-09-12,,Pending,true,Monthly,ACH,City water bill
+1005,Car Insurance,Transportation,118.50,2025-09-20,,Pending,true,Monthly,AutoPay Checking,6-month policy installment
+1006,Phone,Utilities,68.00,2025-09-15,,Pending,true,Monthly,Credit Card,Mobile phone plan
+1007,Credit Card Payment,Debt,250.00,2025-09-08,,Overdue,false,,ACH,Minimum due from statement 2025-08
+1008,Netflix,Personal,15.99,2025-09-02,2025-09-02,Auto-Paid,true,Monthly,Credit Card,Streaming subscription
+1009,Trash,Utilities,22.00,2025-09-07,,Overdue,true,Monthly,ACH,Quarterly service billed monthly
+1010,HOA Dues,Housing,180.00,2025-09-03,2025-09-04,Paid,true,Monthly,ACH,Community association fees

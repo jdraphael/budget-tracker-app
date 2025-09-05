@@ -17,3 +17,5 @@ id,date,description,category,amount,status
 16,2025-08-12,Gas Fill-up,Transportation,-45.00,Paid
 17,2025-08-20,Clothing Purchase,Personal,-120.00,Paid
 18,2025-08-25,Coffee Shop,Food,-10.00,Paid
+19,2025-09-01,Rent,Bills,-1200.00,Pending
+20,2025-09-01,Electricity,Bills,-150.00,Pending
