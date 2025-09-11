@@ -162,3 +162,134 @@ body.modal-open { overflow: hidden; }
 
 /* Bills polish */
 /* Keep selectors small and rely on global tokens for consistency */
+
+/* --- Quick Actions Toolbar --- */
+.qa-col-header {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.qa-toolbar {
+  display: inline-flex;
+  gap: .25rem;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  padding: .125rem 0;
+}
+
+.qa-btn {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border: 1px solid var(--border-200, rgba(255,255,255,.08));
+  border-radius: .6rem;
+  background: var(--bg-200, rgba(255,255,255,.04));
+  cursor: pointer;
+  outline: none;
+  transition: transform .08s ease, background .15s ease, border-color .15s ease;
+}
+.qa-btn:hover { background: var(--bg-300, rgba(255,255,255,.07)); }
+.qa-btn:active { transform: scale(.98); }
+.qa-btn:focus-visible { box-shadow: 0 0 0 2px rgba(100,140,255,.45); }
+
+.qa-btn[aria-pressed="true"] {
+  background: rgba(40,180,120,.16);
+  border-color: rgba(40,180,120,.35);
+}
+
+/* icon size */
+.qa-ico { font-size: 1rem; line-height: 1; }
+
+/* Tooltip */
+.qa-btn[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: -2.1rem;
+  right: 0;
+  transform: translateX(25%);
+  padding: .25rem .5rem;
+  font-size: .75rem;
+  background: rgba(20,20,28,.95);
+  color: #fff;
+  border-radius: .4rem;
+  border: 1px solid rgba(255,255,255,.08);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .12s ease, transform .12s ease;
+}
+.qa-btn:hover::after,
+.qa-btn:focus-visible::after {
+  opacity: 1;
+  transform: translateX(25%) translateY(-2px);
+}
+
+/* Overflow-safe actions column */
+.table-container table td.qa-cell,
+.table-container table th.qa-col-header {
+  position: sticky;
+  right: 0;                /* pin on the right */
+  background: var(--surface-100, rgba(0,0,0,.25));
+  backdrop-filter: blur(6px);
+  z-index: 2;
+}
+
+/* Context menu */
+.qa-contextmenu {
+  position: fixed;
+  min-width: 180px;
+  background: rgba(22,22,30,.98);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: .6rem;
+  padding: .25rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  display: none;
+}
+.qa-contextmenu[aria-hidden="false"] { display: block; }
+.qa-menuitem {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: .5rem .6rem;
+  border-radius: .5rem;
+  cursor: pointer;
+  color: var(--fg-100, #fff);
+}
+.qa-menuitem:hover { background: rgba(255,255,255,.06); }
+.qa-menuitem.danger { color: #ff8a8a; }
+
+/* Ripple */
+.qa-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at var(--rx,50%) var(--ry,50%), rgba(255,255,255,.25), transparent 40%);
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+.qa-btn.rippling::before { opacity: 1; }
+
+/* Toast */
+.qa-toast {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  display: grid;
+  gap: .4rem;
+  z-index: 9999;
+}
+.qa-toast .toast {
+  background: rgba(20,20,28,.95);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.12);
+  padding: .6rem .8rem;
+  border-radius: .6rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  animation: toast-in .2s ease;
+}
+@keyframes toast-in { from { transform: translateY(6px); opacity: .6; } to { transform: translateY(0); opacity: 1; } }

@@ -1187,10 +1187,45 @@ function renderBillsList() {
     // Update sticky offsets now and after render
     updateStickyOffsets();
     setTimeout(updateStickyOffsets, 100);
+
+    // Enhance with Quick Actions sticky column + context menu
+    try { if (window.BillsQuickActions && window.BillsQuickActions.enhance) window.BillsQuickActions.enhance(); } catch {}
 }
 
 // Make renderBillsList globally accessible for tabNavigation.js
 window.renderBillsList = renderBillsList;
+
+// Provide a lightweight BillsApi shim so Quick Actions can persist changes
+window.BillsApi = window.BillsApi || {
+    getById(id) {
+        return (state.data.bills || []).find(x => String(x.Bill_ID) === String(id));
+    },
+    async update(bill) {
+        const arr = state.data.bills || [];
+        const i = arr.findIndex(x => String(x.Bill_ID) === String(bill.Bill_ID));
+        if (i !== -1) arr[i] = { ...arr[i], ...bill };
+        if (typeof saveBillsToCSV === 'function') await saveBillsToCSV();
+        renderBillsList();
+        return arr[i] || bill;
+    },
+    async duplicate(bill) {
+        const copy = { ...bill };
+        const now = Date.now();
+        copy.Bill_ID = String(bill.Bill_ID || '') + '_' + now;
+        copy.Bill_Name = (bill.Bill_Name || 'Bill') + ' (Copy)';
+        (state.data.bills = state.data.bills || []).push(copy);
+        if (typeof saveBillsToCSV === 'function') await saveBillsToCSV();
+        renderBillsList();
+        return copy;
+    },
+    async remove(id) {
+        state.data.bills = (state.data.bills || []).filter(x => String(x.Bill_ID) !== String(id));
+        if (typeof saveBillsToCSV === 'function') await saveBillsToCSV();
+        renderBillsList();
+        return true;
+    }
+};
+
 
 function openEditBillModal(id) {
     const bill = state.data.bills.find(b => String(b.id) === String(id));
@@ -1782,3 +1817,207 @@ async function saveBillsEditModal(bill) {
 document.addEventListener('DOMContentLoaded', initializeUI);
 
 // Tab navigation is initialized on DOMContentLoaded earlier
+
+// ---------------- Quick Actions wiring ----------------
+(function() {
+  function toast(msg) {
+    const wrap = document.getElementById('qa-toast');
+    if (!wrap) return;
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = msg;
+    wrap.appendChild(el);
+    setTimeout(() => el.remove(), 2600);
+  }
+
+  function ripple(e, btn) {
+    const rect = btn.getBoundingClientRect();
+    btn.style.setProperty('--rx', `${e.clientX - rect.left}px`);
+    btn.style.setProperty('--ry', `${e.clientY - rect.top}px`);
+    btn.classList.add('rippling');
+    setTimeout(() => btn.classList.remove('rippling'), 250);
+  }
+
+  function openViewModal(bill) {
+    const overlay = document.getElementById('bills-modal-overlay');
+    const grid = document.getElementById('bills-modal-fields');
+    if (grid) {
+      grid.innerHTML = '';
+      const entries = [
+        ['Bill Name', bill.Bill_Name],
+        ['Category', bill.Category],
+        ['Amount Due', Number(bill.Amount_Due).toFixed(2)],
+        ['Due Date', bill.Due_Date || '—'],
+        ['Paid Date', bill.Paid_Date || '—'],
+        ['Status', bill.Status],
+        ['Recurring', String(bill.Recurring)],
+        ['Frequency', bill.Frequency || '—'],
+        ['Payment Method', bill.Payment_Method || '—'],
+        ['Notes', bill.Notes || '—']
+      ];
+      for (const [label, val] of entries) {
+        const l = document.createElement('div'); l.className = 'bills-modal-label'; l.textContent = label;
+        const v = document.createElement('div'); v.className = 'bills-modal-value'; v.textContent = val;
+        grid.appendChild(l); grid.appendChild(v);
+      }
+    }
+    overlay?.classList.remove('hidden');
+  }
+
+  function openEditModal(bill) {
+    const ov = document.getElementById('bills-edit-modal');
+    const get = (id) => document.getElementById(id);
+    get('bills-edit-name').value = bill.Bill_Name || '';
+    get('bills-edit-category').value = bill.Category || '';
+    get('bills-edit-amount').value = bill.Amount_Due || '';
+    get('bills-edit-status').value = bill.Status || 'Pending';
+    get('bills-edit-due').value = bill.Due_Date || '';
+    get('bills-edit-paid').value = bill.Paid_Date || '';
+    get('bills-edit-recurring').checked = (bill.Recurring === true || String(bill.Recurring) === 'true');
+    get('bills-edit-frequency').value = bill.Frequency || '';
+    get('bills-edit-method').value = bill.Payment_Method || '';
+    get('bills-edit-id').value = bill.Bill_ID || '';
+    get('bills-edit-notes').value = bill.Notes || '';
+    ov?.classList.remove('hidden');
+  }
+
+  function enhanceBillsTable(getBillByRow) {
+    const table = document.querySelector('#bills .table-container table');
+    if (!table) return;
+
+    // Remove legacy non-sticky actions column if present to avoid duplication
+    try {
+      const headRow = table.querySelector('thead tr');
+      if (headRow) {
+        const ths = Array.from(headRow.children);
+        const idx = ths.findIndex(th => /quick\s*actions/i.test(th.textContent || ''));
+        if (idx >= 0) headRow.removeChild(ths[idx]);
+      }
+      table.querySelectorAll('tbody tr').forEach(tr => {
+        const legacy = tr.querySelector('td.bills-actions');
+        if (legacy) legacy.remove();
+      });
+    } catch {}
+
+    const theadRow = table.querySelector('thead tr');
+    if (theadRow && !theadRow.querySelector('.qa-col-header')) {
+      const th = document.createElement('th');
+      th.className = 'qa-col-header';
+      th.scope = 'col';
+      th.textContent = 'Actions';
+      theadRow.appendChild(th);
+    }
+
+    table.querySelectorAll('tbody tr').forEach((tr, idx) => {
+      if (tr.querySelector('.qa-cell')) return;
+      const bill = getBillByRow(tr, idx);
+      const td = document.createElement('td');
+      td.className = 'qa-cell';
+      td.dataset.billId = bill?.Bill_ID ?? '';
+      td.innerHTML = `
+        <div class="qa-toolbar" role="group" aria-label="Quick actions">
+          <button class="qa-btn" data-action="view" data-tooltip="View (V)" aria-label="View bill"><span class="qa-ico">🔎</span></button>
+          <button class="qa-btn" data-action="edit" data-tooltip="Edit (E)" aria-label="Edit bill"><span class="qa-ico">✏️</span></button>
+          <button class="qa-btn" data-action="togglePaid" data-tooltip="Toggle Paid (P)" aria-label="Toggle paid" aria-pressed="${bill && bill.Status === 'Paid'}"><span class="qa-ico">💸</span></button>
+          <button class="qa-btn" data-action="duplicate" data-tooltip="Duplicate (D)" aria-label="Duplicate bill"><span class="qa-ico">🧬</span></button>
+          <button class="qa-btn" data-action="delete" data-tooltip="Delete (Del)" aria-label="Delete bill"><span class="qa-ico">🗑️</span></button>
+        </div>`;
+      tr.appendChild(td);
+    });
+
+    table.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.qa-btn');
+      if (!btn) return;
+      const cell = btn.closest('.qa-cell');
+      const billId = cell?.dataset.billId;
+      if (!billId) return;
+      const bill = window.BillsApi?.getById ? window.BillsApi.getById(billId) : null;
+      const action = btn.dataset.action;
+      ripple(e, btn);
+      if (!bill) return;
+      if (action === 'view') openViewModal(bill);
+      else if (action === 'edit') openEditModal(bill);
+      else if (action === 'togglePaid') {
+        const next = (bill.Status === 'Paid') ? 'Pending' : 'Paid';
+        bill.Status = next;
+        btn.setAttribute('aria-pressed', String(next === 'Paid'));
+        if (window.BillsApi?.update) await window.BillsApi.update(bill);
+        toast(next === 'Paid' ? 'Marked as Paid' : 'Marked as Pending');
+      } else if (action === 'duplicate') {
+        if (window.BillsApi?.duplicate) { await window.BillsApi.duplicate(bill); toast('Bill duplicated'); }
+      } else if (action === 'delete') {
+        const ok = confirm('Delete this bill? This cannot be undone.');
+        if (ok && window.BillsApi?.remove) { await window.BillsApi.remove(bill.Bill_ID); toast('Bill deleted'); }
+      }
+    });
+
+    // Context menu
+    const menu = document.getElementById('qa-contextmenu');
+    let ctxTargetBillId = null;
+    table.addEventListener('contextmenu', (e) => {
+      const row = e.target.closest('tbody tr');
+      if (!row) return;
+      e.preventDefault();
+      const qaCell = row.querySelector('.qa-cell');
+      ctxTargetBillId = qaCell?.dataset.billId || row.getAttribute('data-id') || null;
+      if (!ctxTargetBillId) return;
+      menu.style.left = `${e.clientX}px`;
+      menu.style.top = `${e.clientY}px`;
+      menu.setAttribute('aria-hidden', 'false');
+    });
+    document.addEventListener('click', (e) => { if (!menu.contains(e.target)) menu.setAttribute('aria-hidden', 'true'); });
+    menu.addEventListener('click', async (e) => {
+      const cmd = e.target.closest('.qa-menuitem')?.dataset.cmd;
+      if (!cmd || !ctxTargetBillId) return;
+      const bill = window.BillsApi?.getById ? window.BillsApi.getById(ctxTargetBillId) : null;
+      menu.setAttribute('aria-hidden', 'true');
+      if (!bill) return;
+      if (cmd === 'view') openViewModal(bill);
+      if (cmd === 'edit') openEditModal(bill);
+      if (cmd === 'togglePaid') { bill.Status = (bill.Status === 'Paid') ? 'Pending' : 'Paid'; if (window.BillsApi?.update) await window.BillsApi.update(bill); toast(bill.Status === 'Paid' ? 'Marked as Paid' : 'Marked as Pending'); }
+      if (cmd === 'duplicate' && window.BillsApi?.duplicate) { await window.BillsApi.duplicate(bill); toast('Bill duplicated'); }
+      if (cmd === 'delete' && window.BillsApi?.remove) { const ok = confirm('Delete this bill?'); if (ok) { await window.BillsApi.remove(bill.Bill_ID); toast('Bill deleted'); } }
+    });
+
+    // Keyboard shortcuts on table
+    table.addEventListener('keydown', async (e) => {
+      const row = e.target.closest('tr');
+      if (!row) return;
+      const billId = row.querySelector('.qa-cell')?.dataset.billId || row.getAttribute('data-id');
+      if (!billId) return;
+      const bill = window.BillsApi?.getById ? window.BillsApi.getById(billId) : null;
+      if (!bill) return;
+      if (['v','V'].includes(e.key)) { e.preventDefault(); openViewModal(bill); }
+      if (['e','E'].includes(e.key)) { e.preventDefault(); openEditModal(bill); }
+      if (['p','P'].includes(e.key)) { e.preventDefault(); bill.Status = (bill.Status === 'Paid') ? 'Pending' : 'Paid'; if (window.BillsApi?.update) await window.BillsApi.update(bill); toast(bill.Status === 'Paid' ? 'Marked as Paid' : 'Marked as Pending'); }
+      if (['d','D'].includes(e.key) && window.BillsApi?.duplicate) { e.preventDefault(); await window.BillsApi.duplicate(bill); toast('Bill duplicated'); }
+      if (e.key === 'Delete' && window.BillsApi?.remove) { e.preventDefault(); const ok = confirm('Delete this bill?'); if (ok) { await window.BillsApi.remove(bill.Bill_ID); toast('Bill deleted'); } }
+    });
+  }
+
+  function defaultGetBillByRow(tr) {
+    const id = tr.getAttribute('data-id') || tr.dataset.billId;
+    if (id && window.BillsApi?.getById) return window.BillsApi.getById(id);
+    const tds = Array.from(tr.children);
+    return {
+      Bill_ID: id || (tr.rowIndex + 1000),
+      Bill_Name: tds[0]?.textContent?.trim() || '',
+      Category: tds[1]?.textContent?.trim() || '',
+      Amount_Due: parseFloat((tds[2]?.textContent || '0').replace(/[^\d.-]/g,'')) || 0,
+      Due_Date: tds[3]?.textContent?.trim() || '',
+      Paid_Date: '',
+      Status: tds[4]?.textContent?.trim() || 'Pending',
+      Recurring: true, Frequency: 'Monthly', Payment_Method: tds[5]?.textContent?.trim() || '', Notes: ''
+    };
+  }
+
+  window.BillsQuickActions = {
+    enhance: (mapper = defaultGetBillByRow) => enhanceBillsTable(mapper),
+    toast
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const tableExists = document.querySelector('#bills .table-container table');
+    if (tableExists) window.BillsQuickActions.enhance(defaultGetBillByRow);
+  });
+})();

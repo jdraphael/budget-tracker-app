@@ -641,5 +641,17 @@ document.addEventListener('DOMContentLoaded', function(){
     } catch {}
 });
 </script>
-</body>
-</html>
+    <!-- Global Context Menu for Bills -->
+    <div id="qa-contextmenu" class="qa-contextmenu" role="menu" aria-hidden="true">
+      <button class="qa-menuitem" data-cmd="view" aria-label="View details">🔎 View</button>
+      <button class="qa-menuitem" data-cmd="edit" aria-label="Edit bill">✏️ Edit</button>
+      <button class="qa-menuitem" data-cmd="togglePaid" aria-label="Toggle paid">💸 Toggle Paid</button>
+      <button class="qa-menuitem" data-cmd="duplicate" aria-label="Duplicate bill">🧬 Duplicate</button>
+      <button class="qa-menuitem danger" data-cmd="delete" aria-label="Delete bill">🗑️ Delete</button>
+    </div>
+
+    <!-- Toast container -->
+    <div id="qa-toast" class="qa-toast" aria-live="polite" aria-atomic="true"></div>
+
+  </body>
+  </html>
