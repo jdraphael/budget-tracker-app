@@ -1608,6 +1608,7 @@ function openBillsModal(bill, rowEl) {
     const fields = document.getElementById('bills-modal-fields');
     const btnClose = document.getElementById('bills-modal-close');
     const btnCancel = document.getElementById('bills-modal-cancel');
+    const btnEdit = document.getElementById('bills-modal-edit');
     if (!overlay || !fields) return;
     __billsModalPrevFocus = rowEl || document.activeElement;
     titleEl.textContent = 'Bill Details - ' + (bill.Bill_Name || '');
@@ -1635,6 +1636,14 @@ function openBillsModal(bill, rowEl) {
     const close = () => closeBillsModal();
     btnClose.onclick = close;
     btnCancel.onclick = close;
+    if (btnEdit) {
+        btnEdit.onclick = (e) => {
+            e.preventDefault();
+            closeBillsModal();
+            // open the edit modal pre-filled
+            openBillsEditModal(bill, rowEl);
+        };
+    }
     overlay.onclick = (e) => { if (e.target === overlay) close(); };
     // Open and focus trap
     overlay.classList.remove('hidden');
@@ -1935,7 +1944,7 @@ document.addEventListener('DOMContentLoaded', initializeUI);
       const action = btn.dataset.action;
       ripple(e, btn);
       if (!bill) return;
-      if (action === 'view') openViewModal(bill);
+      if (action === 'view') { if (typeof openBillsModal === 'function') openBillsModal(bill); else openViewModal(bill); }
       else if (action === 'edit') openEditModal(bill);
       else if (action === 'togglePaid') {
         const next = (bill.Status === 'Paid') ? 'Pending' : 'Paid';
@@ -1972,7 +1981,7 @@ document.addEventListener('DOMContentLoaded', initializeUI);
       const bill = window.BillsApi?.getById ? window.BillsApi.getById(ctxTargetBillId) : null;
       menu.setAttribute('aria-hidden', 'true');
       if (!bill) return;
-      if (cmd === 'view') openViewModal(bill);
+      if (cmd === 'view') { if (typeof openBillsModal === 'function') openBillsModal(bill); else openViewModal(bill); }
       if (cmd === 'edit') openEditModal(bill);
       if (cmd === 'togglePaid') { bill.Status = (bill.Status === 'Paid') ? 'Pending' : 'Paid'; if (window.BillsApi?.update) await window.BillsApi.update(bill); toast(bill.Status === 'Paid' ? 'Marked as Paid' : 'Marked as Pending'); }
       if (cmd === 'duplicate' && window.BillsApi?.duplicate) { await window.BillsApi.duplicate(bill); toast('Bill duplicated'); }
@@ -1987,7 +1996,7 @@ document.addEventListener('DOMContentLoaded', initializeUI);
       if (!billId) return;
       const bill = window.BillsApi?.getById ? window.BillsApi.getById(billId) : null;
       if (!bill) return;
-      if (['v','V'].includes(e.key)) { e.preventDefault(); openViewModal(bill); }
+      if (['v','V'].includes(e.key)) { e.preventDefault(); if (typeof openBillsModal === 'function') openBillsModal(bill); else openViewModal(bill); }
       if (['e','E'].includes(e.key)) { e.preventDefault(); openEditModal(bill); }
       if (['p','P'].includes(e.key)) { e.preventDefault(); bill.Status = (bill.Status === 'Paid') ? 'Pending' : 'Paid'; if (window.BillsApi?.update) await window.BillsApi.update(bill); toast(bill.Status === 'Paid' ? 'Marked as Paid' : 'Marked as Pending'); }
       if (['d','D'].includes(e.key) && window.BillsApi?.duplicate) { e.preventDefault(); await window.BillsApi.duplicate(bill); toast('Bill duplicated'); }
